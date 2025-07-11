@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Rotas
-const userRoutes = require('./models/user');
+const userRoutes = require('./routes/User');
 app.use('/api/users', userRoutes);
 
 // Conectar ao MongoDB
