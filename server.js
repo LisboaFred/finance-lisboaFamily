@@ -12,6 +12,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Rotas
+const userRoutes = require('./routes/user');
+app.use('/api/users', userRoutes);
+
 // Conectar ao MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/controle-financeiro')
   .then(() => console.log('MongoDB conectado'))
