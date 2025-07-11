@@ -16,6 +16,9 @@ app.use(express.static('public'));
 const userRoutes = require('./routes/User');
 app.use('/api/users', userRoutes);
 
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
 // Conectar ao MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/finance_bot')
   .then(() => console.log('MongoDB conectado'))
