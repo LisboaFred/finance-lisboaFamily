@@ -13,11 +13,11 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Rotas
-const userRoutes = require('./routes/user');
+const userRoutes = require('./models/user');
 app.use('/api/users', userRoutes);
 
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/controle-financeiro')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/finance_bot')
   .then(() => console.log('MongoDB conectado'))
   .catch(err => console.error('Erro ao conectar MongoDB:', err));
 
