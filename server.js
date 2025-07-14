@@ -19,6 +19,9 @@ app.use('/api/users', userRoutes);
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+const transactionRoutes = require('./routes/Transaction');
+app.use('/api/transactions', transactionRoutes);
+
 // Conectar ao MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/finance_bot')
   .then(() => console.log('MongoDB conectado'))
