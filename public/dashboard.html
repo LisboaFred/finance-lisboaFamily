@@ -8,13 +8,19 @@
 <body>
   <h2>Controle Financeiro</h2>
   <form id="financeForm">
-    <input type="text" id="title" placeholder="Título do gasto" required />
+    <input type="text" id="title" placeholder="Título" required />
     <input type="number" id="amount" placeholder="Valor" required />
+    <input type="text" id="category" placeholder="Categoria" required />
+    <select id="type" required>
+      <option value="expense">Despesa</option>
+      <option value="income">Receita</option>
+    </select>
+    <input type="date" id="date" required />
     <input type="text" id="description" placeholder="Descrição" />
     <button type="submit">Adicionar</button>
   </form>
   <hr>
-  <h3>Meus Gastos</h3>
+  <h3>Meus Lançamentos</h3>
   <ul id="financeList"></ul>
 
   <script src="dashboard.js"></script>
