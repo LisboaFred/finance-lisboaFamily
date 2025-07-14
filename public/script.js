@@ -1,3 +1,4 @@
+// LOGIN
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value;
@@ -10,15 +11,22 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
   });
   const data = await res.json();
 
-  if (res.ok) {
-    document.getElementById('result').style.color = "green";
-    document.getElementById('result').innerText = "Login realizado com sucesso!\nToken: " + data.token;
+  if (res.ok && data.token) {
+    localStorage.setItem('token', data.token); // Salva o token!
+    window.location.href = 'dashboard.html';    // Redireciona para o painel financeiro
   } else {
     document.getElementById('result').style.color = "#e74c3c";
-    document.getElementById('result').innerText = data.error || "Erro ao fazer login";
+    if (data.error) {
+      document.getElementById('result').innerText = data.error;
+    } else if (data.message) {
+      document.getElementById('result').innerText = data.message;
+    } else {
+      document.getElementById('result').innerText = "Erro ao fazer login";
+    }
   }
 });
 
+// CADASTRO (register)
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const name = document.getElementById('registerName').value;
