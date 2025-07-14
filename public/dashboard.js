@@ -1,58 +1,60 @@
-// Supondo que você salvou o token JWT após login localStorage.setItem('token', token)
-const token = localStorage.getItem('token');
-const apiUrl = '/api/transactions';
+const form  = document.getElementById('transaction-form');
+const list  = document.getElementById('transactions-list');
 
-const form = document.getElementById('financeForm');
-const financeList = document.getElementById('financeList');
+const apiUrl = '/api/transactions';
+const token  = localStorage.getItem('token');
 
 async function fetchFinances() {
-  const res = await fetch(apiUrl, { headers: { token: 'Bearer ' + token } });
-  const finances = await res.json();
-  financeList.innerHTML = '';
-  if (Array.isArray(finances)) {
-    finances.forEach(finance => {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <strong>${finance.title}</strong> - R$${finance.amount.toFixed(2)} <br>
-        Tipo: ${finance.type} | Categoria: ${finance.category} | Data: ${finance.date ? new Date(finance.date).toLocaleDateString() : ''} <br>
-        ${finance.description || ''}
-        <button onclick="deleteFinance('${finance._id}')">Excluir</button>
-      `;
-      financeList.appendChild(li);
-    });
-  } else {
-    financeList.innerHTML = '<li>Nenhum lançamento encontrado</li>';
-  }
+  list.innerHTML = '';
+  const res = await fetch(apiUrl, {
+    headers: { token: 'Bearer ' + token }
+  });
+  const data = await res.json();
+  renderTransactions(data);
 }
 
-form.onsubmit = async (e) => {
-  e.preventDefault();
-  const title = document.getElementById('title').value;
-  const amount = document.getElementById('amount').value;
-  const description = document.getElementById('description').value;
-  const type = document.getElementById('type').value;
-  const category = document.getElementById('category').value;
-  const date = document.getElementById('date').value;
+function renderTransactions(transactions) {
+  transactions.forEach(tx => {
+    const li = document.createElement('li');
+    li.dataset.id = tx._id;
+    li.innerHTML = `
+      <strong>${tx.title}</strong> – R$${tx.amount.toFixed(2)}<br>
+      Tipo: ${tx.type} | Categoria: ${tx.category} | Data: ${new Date(tx.date).toLocaleDateString()}<br>
+      ${tx.description}
+      <button class="btn-delete">Excluir</button>
+    `;
+    list.appendChild(li);
+  });
 
-  await fetch(apiUrl, {
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.closest('li').dataset.id;
+      const res = await fetch(`${apiUrl}/${id}`, {
+        method: 'DELETE',
+        headers: { token: 'Bearer ' + token }
+      });
+      if (res.ok) btn.closest('li').remove();
+    });
+  });
+}
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(form);
+  const body = Object.fromEntries(fd.entries());
+  body.amount = parseFloat(body.amount);
+  const res = await fetch(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       token: 'Bearer ' + token
     },
-    body: JSON.stringify({ title, amount, description, type, category, date })
+    body: JSON.stringify(body)
   });
-  form.reset();
-  fetchFinances();
-};
+  if (res.ok) {
+    form.reset();
+    fetchFinances();
+  }
+});
 
-async function deleteFinance(id) {
-  await fetch(`${apiUrl}/${id}`, {
-    method: 'DELETE',
-    headers: { token: 'Bearer ' + token }
-  });
-  fetchFinances();
-}
-
-// Inicialização
 fetchFinances();

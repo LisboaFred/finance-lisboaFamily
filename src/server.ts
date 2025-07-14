@@ -8,13 +8,27 @@ import path from 'path';
 import userRoutes from './routes/User';
 import authRoutes from './routes/auth';
 import transactionRoutes from './routes/Transaction';
+import categoryRoutes from './routes/categories';
+import dashboardRoutes from './routes/dashboards';
 
 dotenv.config();
 
 const app: Application = express();
 
 // Middlewares
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc:  ["'self'"],
+      styleSrc:   ["'self'", 'https:'],
+      imgSrc:     ["'self'", 'data:'],
+      connectSrc: ["'self'"],
+      fontSrc:    ["'self'", 'https:'],
+      objectSrc:  ["'none'"]
+    }
+  }
+}));
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
@@ -23,6 +37,8 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Conexão com MongoDB
 mongoose
