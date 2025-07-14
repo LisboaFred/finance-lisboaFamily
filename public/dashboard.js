@@ -6,7 +6,7 @@ const form = document.getElementById('financeForm');
 const financeList = document.getElementById('financeList');
 
 async function fetchFinances() {
-  const res = await fetch(apiUrl, { headers: { Authorization: 'Bearer ' + token } });
+  const res = await fetch(apiUrl, { headers: { token: 'Bearer ' + token } });
   const finances = await res.json();
   financeList.innerHTML = '';
   if (Array.isArray(finances)) {
@@ -38,7 +38,7 @@ form.onsubmit = async (e) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + token
+      token: 'Bearer ' + token
     },
     body: JSON.stringify({ title, amount, description, type, category, date })
   });
@@ -49,7 +49,7 @@ form.onsubmit = async (e) => {
 async function deleteFinance(id) {
   await fetch(`${apiUrl}/${id}`, {
     method: 'DELETE',
-    headers: { Authorization: 'Bearer ' + token }
+    headers: { token: 'Bearer ' + token }
   });
   fetchFinances();
 }

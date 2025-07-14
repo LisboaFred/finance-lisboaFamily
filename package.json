@@ -34,7 +34,6 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/bcryptjs": "^3.0.2",
     "@types/express-rate-limit": "^7.5.0",
-    "@types/express-validator": "^7.2.1",
     "@types/mongoose": "^8.0.0",
     "@types/dotenv": "^8.2.0"
   }
