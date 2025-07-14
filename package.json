@@ -2,7 +2,7 @@
   "name": "finance-lisboafamily",
   "version": "1.0.0",
   "description": "Esta é uma ideia de projeto pessoal para controle de finanças meu e da minha esposa.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
