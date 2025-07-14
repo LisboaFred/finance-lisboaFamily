@@ -1,0 +1,49 @@
+// Supondo que você salvou o token JWT após login localStorage.setItem('token', token)
+const token = localStorage.getItem('token');
+const apiUrl = '/api/finance';
+
+const form = document.getElementById('financeForm');
+const financeList = document.getElementById('financeList');
+
+async function fetchFinances() {
+  const res = await fetch(apiUrl, { headers: { Authorization: 'Bearer ' + token } });
+  const finances = await res.json();
+  financeList.innerHTML = '';
+  finances.forEach(finance => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <strong>${finance.title}</strong> - R$${finance.amount.toFixed(2)}
+      <br>${finance.description || ''}
+      <button onclick="deleteFinance('${finance._id}')">Excluir</button>
+    `;
+    financeList.appendChild(li);
+  });
+}
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  const title = document.getElementById('title').value;
+  const amount = document.getElementById('amount').value;
+  const description = document.getElementById('description').value;
+  await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token
+    },
+    body: JSON.stringify({ title, amount, description })
+  });
+  form.reset();
+  fetchFinances();
+};
+
+async function deleteFinance(id) {
+  await fetch(`${apiUrl}/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer ' + token }
+  });
+  fetchFinances();
+}
+
+// Inicialização
+fetchFinances();

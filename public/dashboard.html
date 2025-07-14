@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Painel Financeiro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h2>Controle Financeiro</h2>
+  <form id="financeForm">
+    <input type="text" id="title" placeholder="Título do gasto" required />
+    <input type="number" id="amount" placeholder="Valor" required />
+    <input type="text" id="description" placeholder="Descrição" />
+    <button type="submit">Adicionar</button>
+  </form>
+  <hr>
+  <h3>Meus Gastos</h3>
+  <ul id="financeList"></ul>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
