@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const Transaction = require('./Transaction');
+const Transaction = require('../models/Transaction');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -21,12 +21,13 @@ router.post('/', auth, [
 
     const transaction = new Transaction({
       ...req.body,
-      userId: req.userId
+      user: req.userId 
     });
 
     await transaction.save();
     res.status(201).json(transaction);
   } catch (error) {
+    console.error('ERRO POST /api/transactions', error);
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -35,9 +36,9 @@ router.post('/', auth, [
 router.get('/', auth, async (req, res) => {
   try {
     const { page = 1, limit = 10, type, category, startDate, endDate } = req.query;
-    
-    const query = { userId: req.userId };
-    
+
+    const query = { user: req.userId }; 
+
     if (type) query.type = type;
     if (category) query.category = category;
     if (startDate || endDate) {
@@ -51,15 +52,10 @@ router.get('/', auth, async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
-    const total = await Transaction.countDocuments(query);
+    res.json(transactions); 
 
-    res.json({
-      transactions,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      total
-    });
   } catch (error) {
+    console.error('ERRO GET /api/transactions', error);
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -68,7 +64,7 @@ router.get('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   try {
     const transaction = await Transaction.findOneAndUpdate(
-      { _id: req.params.id, userId: req.userId },
+      { _id: req.params.id, user: req.userId }, 
       req.body,
       { new: true }
     );
@@ -79,6 +75,7 @@ router.put('/:id', auth, async (req, res) => {
 
     res.json(transaction);
   } catch (error) {
+    console.error('ERRO PUT /api/transactions/:id', error);
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -88,7 +85,7 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     const transaction = await Transaction.findOneAndDelete({
       _id: req.params.id,
-      userId: req.userId
+      user: req.userId 
     });
 
     if (!transaction) {
@@ -97,6 +94,7 @@ router.delete('/:id', auth, async (req, res) => {
 
     res.json({ message: 'Transação deletada com sucesso' });
   } catch (error) {
+    console.error('ERRO DELETE /api/transactions/:id', error);
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });

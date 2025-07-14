@@ -21,7 +21,7 @@ async function fetchFinances() {
       financeList.appendChild(li);
     });
   } else {
-    financeList.innerHTML = '<li>Nenhum lançamento encontrado ou erro na API.</li>';
+    financeList.innerHTML = '<li>Nenhum lançamento encontrado</li>';
   }
 }
 
