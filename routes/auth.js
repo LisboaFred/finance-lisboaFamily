@@ -31,7 +31,7 @@ router.post('/register', [
 
     // Gerar token JWT
     const token = jwt.sign(
-      { userId: user._id },
+      { user: user._id },
       process.env.JWT_SECRET || 'secretkey',
       { expiresIn: '7d' }
     );
@@ -76,7 +76,7 @@ router.post('/login', [
 
     // Gerar token JWT
     const token = jwt.sign(
-      { userId: user._id },
+      { user: user._id },
       process.env.JWT_SECRET || 'secretkey',
       { expiresIn: '7d' }
     );
@@ -97,7 +97,7 @@ router.post('/login', [
 // Obter perfil do usuário
 router.get('/profile', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('-password');
+    const user = await User.findById(req.user).select('-password');
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Erro interno do servidor' });

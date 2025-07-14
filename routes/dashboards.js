@@ -16,7 +16,7 @@ router.get('/', auth, async (req, res) => {
     const monthlyIncome = await Transaction.aggregate([
       {
         $match: {
-          userId: req.userId,
+          user: req.user,
           type: 'income',
           date: { $gte: firstDay, $lte: lastDay }
         }
@@ -32,7 +32,7 @@ router.get('/', auth, async (req, res) => {
     const monthlyExpenses = await Transaction.aggregate([
       {
         $match: {
-          userId: req.userId,
+          user: req.user,
           type: 'expense',
           date: { $gte: firstDay, $lte: lastDay }
         }
@@ -49,7 +49,7 @@ router.get('/', auth, async (req, res) => {
     const expensesByCategory = await Transaction.aggregate([
       {
         $match: {
-          userId: req.userId,
+          user: req.user,
           type: 'expense',
           date: { $gte: firstDay, $lte: lastDay }
         }
@@ -67,7 +67,7 @@ router.get('/', auth, async (req, res) => {
 
     // Transações recentes
     const recentTransactions = await Transaction.find({
-      userId: req.userId
+      user: req.user
     })
     .sort({ date: -1 })
     .limit(5);

@@ -9,7 +9,7 @@ router.post('/', auth, async (req, res) => {
   try {
     const category = new Category({
       ...req.body,
-      userId: req.userId
+      user: req.user
     });
 
     await category.save();
@@ -22,7 +22,7 @@ router.post('/', auth, async (req, res) => {
 // Obter categorias do usuário
 router.get('/', auth, async (req, res) => {
   try {
-    const categories = await Category.find({ userId: req.userId });
+    const categories = await Category.find({ user: req.user });
     res.json(categories);
   } catch (error) {
     res.status(500).json({ message: 'Erro interno do servidor' });

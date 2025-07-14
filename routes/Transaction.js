@@ -21,7 +21,7 @@ router.post('/', auth, [
 
     const transaction = new Transaction({
       ...req.body,
-      user: req.userId 
+      user: req.user 
     });
 
     await transaction.save();
@@ -37,7 +37,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const { page = 1, limit = 10, type, category, startDate, endDate } = req.query;
 
-    const query = { user: req.userId }; 
+    const query = { user: req.user }; 
 
     if (type) query.type = type;
     if (category) query.category = category;
@@ -64,7 +64,7 @@ router.get('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   try {
     const transaction = await Transaction.findOneAndUpdate(
-      { _id: req.params.id, user: req.userId }, 
+      { _id: req.params.id, user: req.user }, 
       req.body,
       { new: true }
     );
@@ -85,7 +85,7 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     const transaction = await Transaction.findOneAndDelete({
       _id: req.params.id,
-      user: req.userId 
+      user: req.user 
     });
 
     if (!transaction) {
