@@ -17,7 +17,7 @@ router.post(
     body('type').isIn(['income', 'expense']).withMessage('Tipo deve ser income ou expense'),
     body('category').trim().notEmpty().withMessage('Categoria é obrigatória'),
     body('amount').isNumeric().withMessage('Valor deve ser numérico'),
-    body('description').trim().notEmpty().withMessage('Descrição é obrigatória'),
+    body('description').optional().isString().trim(),
     body('date').isISO8601().withMessage('Data inválida'),
   ],
   createTransaction
