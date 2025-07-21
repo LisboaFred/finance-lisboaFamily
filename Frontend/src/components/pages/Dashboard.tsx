@@ -50,7 +50,6 @@ const categoryIcons: Record<string, string> = {
 function formatMoney(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
-
 function statusClass(status: string) {
   if (status === 'Concluído') return 'bg-green-100 text-green-800';
   if (status === 'Pendente') return 'bg-yellow-100 text-yellow-800';
@@ -127,4 +126,161 @@ export default function Dashboard() {
   function getCategory(catId: string) {
     return categories.find(c => c._id === catId);
   }
-};
+
+  return (
+    <div className="min-h-screen bg-[#f7fafc]">
+      <div className="max-w-7xl mx-auto py-12 px-10">
+
+        {/* Filtros */}
+        <div className="flex flex-wrap gap-4 mb-8">
+          {periodOptions.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setPeriod(opt.value)}
+              className={`px-5 py-3 rounded-lg font-semibold transition ${period === opt.value ? 'bg-blue-600 text-white shadow' : 'bg-white text-gray-700 border hover:bg-blue-50'}`}>
+              {opt.label}
+            </button>
+          ))}
+          <input type="date" onChange={e => {setPeriod('custom'); setStartDate(e.target.value);}} className="border rounded px-3 py-2"/>
+          <span className="px-1">até</span>
+          <input type="date" onChange={e => {setPeriod('custom'); setEndDate(e.target.value);}} className="border rounded px-3 py-2"/>
+        </div>
+
+        {/* Cards */}
+        {stats && (
+        <div className="grid grid-cols-4 gap-8 mb-10">
+          <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
+            <span className="text-3xl bg-blue-100 rounded-full p-3">💰</span>
+            <div>
+              <div className="text-gray-400 font-medium">Saldo Atual</div>
+              <div className="text-2xl font-bold"> {formatMoney(stats.balance)} </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
+            <span className="text-3xl bg-green-100 rounded-full p-3">⬆️</span>
+            <div>
+              <div className="text-gray-400 font-medium">Receitas</div>
+              <div className="text-2xl font-bold text-green-600"> {formatMoney(stats.totalIncome)} </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
+            <span className="text-3xl bg-red-100 rounded-full p-3">⬇️</span>
+            <div>
+              <div className="text-gray-400 font-medium">Despesas</div>
+              <div className="text-2xl font-bold text-red-500"> {formatMoney(stats.totalExpense)} </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
+            <span className="text-3xl bg-orange-100 rounded-full p-3">🟧</span>
+            <div>
+              <div className="text-gray-400 font-medium">Economia</div>
+              <div className="text-2xl font-bold text-orange-500">{formatMoney(stats.savings)}</div>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Grid 2 colunas: Pizza + Tabela */}
+        <div className="grid grid-cols-2 gap-10">
+          {/* Gráfico pizza e legenda */}
+          <div className="bg-white rounded-2xl shadow p-10 flex flex-col items-center min-h-[350px]">
+            <h3 className="font-bold mb-8 text-lg">Gastos por Categoria</h3>
+            {stats && (
+            <PieChart width={360} height={360}>
+              <Pie
+                data={stats.byCategory}
+                dataKey="value"
+                nameKey="category"
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={100}
+                label={({ percent = 0 }) => `${(percent * 100).toFixed(0)}%`}
+              >
+                {stats.byCategory.map((entry) => (
+                  <Cell
+                    key={entry.category}
+                    fill={getCategory(entry.category)?.color || '#8884d8'}
+                  />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+            )}
+            {/* Legenda */}
+            {stats && (
+            <div className="grid grid-cols-2 gap-x-10 gap-y-2 mt-6 w-full">
+              {stats.byCategory.map((cat) => {
+                const c = getCategory(cat.category);
+                return (
+                  <div key={cat.category} className="flex items-center gap-2">
+                    <span className="text-xl" style={{ color: c?.color }}>{categoryIcons[c?.name || 'Outros']}</span>
+                    <span>{c?.name}</span>
+                    <span className="ml-auto font-semibold">{formatMoney(cat.value)}</span>
+                  </div>
+                );
+              })}
+            </div>
+            )}
+          </div>
+
+          {/* Transações Recentes */}
+          <div className="bg-white rounded-2xl shadow p-10 overflow-x-auto min-h-[350px]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">Transações Recentes</h3>
+              <a href="#" className="text-blue-500 text-sm font-medium hover:underline">Ver todas</a>
+            </div>
+            <table className="w-full text-base">
+              <thead>
+                <tr className="text-gray-400">
+                  <th className="text-left whitespace-nowrap">Transação</th>
+                  <th className="text-left whitespace-nowrap">Categoria</th>
+                  <th className="text-right whitespace-nowrap">Valor</th>
+                  <th className="text-center whitespace-nowrap">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map(tx => {
+                  const c = getCategory(tx.category);
+                  return (
+                    <tr key={tx._id} className="border-b last:border-b-0">
+                      <td className="py-3 flex items-center gap-2 font-semibold max-w-[180px] truncate">
+                        <span className="text-lg">{categoryIcons[c?.name || 'Outros']}</span>
+                        <span>{tx.description}</span>
+                        <div className="text-xs text-gray-400 block">{new Date(tx.date).toLocaleDateString('pt-BR')}</div>
+                      </td>
+                      <td className="max-w-[160px] truncate">{c?.name || tx.category}</td>
+                      <td className={`text-right font-bold ${tx.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
+                        {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
+                      </td>
+                      <td className="text-center">
+                        <span className={`rounded px-2 py-1 text-xs font-semibold ${statusClass(tx.status || 'Concluído')}`}>{tx.status || 'Concluído'}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Botão */}
+        <div className="flex justify-end mt-12">
+          <button
+            className="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold shadow hover:bg-blue-700 transition text-lg"
+            onClick={() => setModalOpen(true)}
+          >
+            + Registrar Nova Transação
+          </button>
+        </div>
+        {/* Modal */}
+        {modalOpen && (
+          <NewTransactionModal
+            onClose={() => setModalOpen(false)}
+            onSuccess={() => setReload(r => r + 1)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
