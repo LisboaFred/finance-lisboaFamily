@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import api from '../../services/api';
 import NewTransactionModal from '../NewTransactionModal';
+import { useNavigate } from 'react-router-dom';
 
 interface Category {
   _id: string;
@@ -127,8 +128,24 @@ export default function Dashboard() {
     return categories.find(c => c._id === catId);
   }
 
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    localStorage.removeItem('token');
+    navigate('/login');
+  }
+
   return (
-    <div className="min-h-screen bg-[#f7fafc]">
+    <div className="min-h-screen bg-gray-300">
+      <div className="w-full flex justify-end px-10 py-4">
+        <button
+          onClick={handleLogout}
+          className="text-sm text-red-600 font-semibold hover:underline"
+        >
+          Sair
+        </button>
+      </div>
+
       <div className="max-w-7xl mx-auto py-12 px-10">
 
         {/* Filtros */}
@@ -236,7 +253,6 @@ export default function Dashboard() {
                   <th className="text-left whitespace-nowrap">Transação</th>
                   <th className="text-left whitespace-nowrap">Categoria</th>
                   <th className="text-right whitespace-nowrap">Valor</th>
-                  <th className="text-center whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -253,9 +269,6 @@ export default function Dashboard() {
                       <td className={`text-right font-bold ${tx.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
                         {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
                       </td>
-                      <td className="text-center">
-                        <span className={`rounded px-2 py-1 text-xs font-semibold ${statusClass(tx.status || 'Concluído')}`}>{tx.status || 'Concluído'}</span>
-                      </td>
                     </tr>
                   );
                 })}
@@ -265,7 +278,7 @@ export default function Dashboard() {
         </div>
 
         {/* Botão */}
-        <div className="flex justify-end mt-12">
+        <div className="flex justify-center mt-12">
           <button
             className="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold shadow hover:bg-blue-700 transition text-lg"
             onClick={() => setModalOpen(true)}
