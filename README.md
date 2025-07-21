@@ -1,10 +1,10 @@
 # Finance Lisboa Family
 
-Uma aplicação full-stack para controle de finanças pessoais, migrada para TypeScript no backend e com front-end estático em JavaScript.
+Uma aplicação full-stack para controle de finanças pessoais, TypeScript no backend e typescript React no frontend.
 
 ## 🚀 Estado Atual
 
-• Backend em **TypeScript** (`src/`):  
+• Backend em **TypeScript** (`Backend/`):  
   - API REST com Express + Mongoose  
   - Autenticação JWT (middleware `auth.ts`)  
   - CRUD de Usuários, Transações e Categorias  
@@ -13,7 +13,7 @@ Uma aplicação full-stack para controle de finanças pessoais, migrada para Typ
   - Estrutura `controller → service (ainda a evoluir) → model`  
   - Configurado para build (`npm run build`) e dev (`npm run dev`)  
 
-• Front-end estático em **JavaScript** (`public/`):  
+• Front-end estático em **JavaScript** (`Frontend/`):  
   - Páginas de login, dashboard e cadastro  
   - Chamada à API via `fetch`, token em `localStorage`  
   - Layout básico, sem framework  
