@@ -1,47 +1,41 @@
 # Finance Lisboa Family
 
-Uma aplicação full-stack para controle de finanças pessoais, TypeScript no backend e typescript React no frontend.
+Uma aplicação full-stack com login e dashboard para controle de finanças pessoais, com backend em TypeScript (Node.js, Express) e frontend em React + TypeScript.
 
-## 🚀 Estado Atual
+## Estado Atual
 
-• Backend em **TypeScript** (`Backend/`):  
-  - API REST com Express + Mongoose  
-  - Autenticação JWT (middleware `auth.ts`)  
-  - CRUD de Usuários, Transações e Categorias  
-  - Endpoint de resumo de gastos por categoria (`/api/dashboard`)  
-  - Validação de entrada com `express-validator`  
-  - Estrutura `controller → service (ainda a evoluir) → model`  
-  - Configurado para build (`npm run build`) e dev (`npm run dev`)  
+### Backend (`/Backend`)
+• API REST com Express + Mongoose  
+• Autenticação JWT (middleware `auth.ts`)  
+• CRUD de Usuários, Transações e Categorias  
+• Endpoint de resumo de gastos por categoria (`/api/dashboard`)  
+• Middlewares de segurança: Helmet (CSP), CORS, rate limiting  
+• Configuração com dotenv para variáveis de ambiente  
+• TypeScript com ts-node-dev e build via tsc  
+• Estrutura controller → service → model  
 
-• Front-end estático em **JavaScript** (`Frontend/`):  
-  - Páginas de login, dashboard e cadastro  
-  - Chamada à API via `fetch`, token em `localStorage`  
-  - Layout básico, sem framework  
+### Frontend (`/Frontend`)
+• Aplicação React com TypeScript, Vite e ESLint  
+• React Router para navegação (Login, Registro, Dashboard, Transações)  
+• Chamada à API com Axios e token em localStorage  
+• Visualização de dados com Recharts (gráficos de despesas e receitas)  
+• Estilização com Tailwind CSS  
+• Layout responsivo e modularizado  
 
-📌 Roadmap / Próximas Entregas
+## Roadmap / Próximas Entregas
 
-• Front-end:  
-  - Páginas de login, dashboard e cadastro  
-  - Gráficos de gastos (Chart.js, ApexCharts ou similar)
-  - Layout responsivo e refatoração em módulos ES6
-  - (Opcional) Migração para React ou Angular
+### Frontend
+• Otimizações de build e performance  
+• Melhorias de UX/UI e acessibilidade  
 
-• Backend:  
-  - Camada de services e injeção de dependência
-  - Tratamento global de erros e DTOs com class-validator
-  - Cache Redis para endpoints de resumo
-  - Testes unitários (Jest) e de integração (Supertest / mongodb-memory-server)
-  - Documentação OpenAPI/Swagger
-  - Docker + docker-compose (API, MongoDB, Redis)
-  - CI/CD (GitHub Actions): lint → build → testes → deploy
+### Backend
+• Camada completa de services e injeção de dependência  
+• Tratamento global de erros e validação com class-validator  
+• Cache Redis para endpoints críticos  
+• Testes unitários e de integração (Jest, Supertest)  
+• Documentação OpenAPI/Swagger  
+• Docker + docker-compose (API, MongoDB, Redis)  
+• CI/CD com GitHub Actions  
 
-• Segurança & Performance:  
-  - Http-only cookies + CSRF
-  - Rate limiting por rota/IP
-  - Índices Mongo e paginação cursor-based
-  - Logs estruturados (Pino/Winston) e métricas Prometheus
-
-
-Contribuições são bem-vindas!
-Abra issues para bugs ou sugestões e envie PRs para novos recursos.
-
+## Contribuições
+Contribuições são bem-vindas! Abra issues para bugs ou sugestões e envie PRs.  
