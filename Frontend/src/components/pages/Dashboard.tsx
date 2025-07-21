@@ -37,95 +37,97 @@ interface RecentTx {
   status?: string;
 }
 
-const periodOptions = [
-  { label: 'Hoje', value: 'today' },
-  { label: 'Esta semana', value: 'week' },
-  { label: 'Este mês', value: 'month' },
-  { label: 'Este ano', value: 'year' },
-];
-
-const categoryIcons: Record<string, string> = {
-  Moradia: '🏠', Alimentação: '🍔', Transporte: '🚗', Lazer: '🎉', Saúde: '💊', Outros: '📦', Receita: '💸'
-};
-
-function formatMoney(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-function statusClass(status: string) {
-  if (status === 'Concluído') return 'bg-green-100 text-green-800';
-  if (status === 'Pendente') return 'bg-yellow-100 text-yellow-800';
-  return 'bg-gray-100 text-gray-600';
-}
-
 export default function Dashboard() {
-  const [period, setPeriod] = useState('week');
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recent, setRecent] = useState<RecentTx[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [reload, setReload] = useState(0);
-  const [selectedTx, setSelectedTx] = useState<RecentTx | null>(null);
-
   const navigate = useNavigate();
 
-  // Carregar categorias
+  // formatação helpers
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const today = new Date();
+  const currentYearMonth = `${today.getFullYear()}-${pad(today.getMonth() + 1)}`;
+  const currentDate      = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+  // filtros
+  const [period, setPeriod]               = useState<'today' | 'month' | 'custom'>('today');
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentYearMonth);
+  const [startDate, setStartDate]         = useState<string>(currentDate);
+  const [endDate, setEndDate]             = useState<string>(currentDate);
+
+  // dados
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [stats, setStats]           = useState<DashboardStats | null>(null);
+  const [recent, setRecent]         = useState<RecentTx[]>([]);
+  const [modalOpen, setModalOpen]   = useState(false);
+  const [reload, setReload]         = useState(0);
+  const [selectedTx, setSelectedTx] = useState<RecentTx | null>(null);
+
+  const periodOptions = [
+    { label: 'Hoje', value: 'today' },
+  ];
+
+  const categoryIcons: Record<string,string> = {
+    Moradia: '🏠',
+    Alimentação: '🍔',
+    Transporte: '🚗',
+    Lazer: '🎉',
+    Saúde: '💊',
+    Outros: '📦',
+    Receita: '💸',
+    Educação: '📚'
+  };
+
+  function formatMoney(v: number) {
+    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  // monta start/end como ISO UTC
+  function getFilterParams() {
+    const params: any = {};
+
+    if (period === 'today') {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+      params.startDate = start.toISOString();
+      params.endDate   = end.toISOString();
+
+    } else if (period === 'month' && selectedMonth) {
+      const [y, m] = selectedMonth.split('-').map(Number);
+      const start = new Date(y, m - 1, 1, 0, 0, 0, 0);
+      const lastDay = new Date(y, m, 0).getDate();
+      const end   = new Date(y, m - 1, lastDay, 23, 59, 59, 999);
+      params.startDate = start.toISOString();
+      params.endDate   = end.toISOString();
+
+    } else if (period === 'custom' && startDate && endDate) {
+      const start = new Date(`${startDate}T00:00:00`);
+      const end   = new Date(`${endDate}T23:59:59.999`);
+      params.startDate = start.toISOString();
+      params.endDate   = end.toISOString();
+    }
+
+    return params;
+  }
+
+  // carrega categorias
   useEffect(() => {
     api.get('/categories')
       .then(resp => setCategories(resp.data))
       .catch(() => setCategories([]));
   }, []);
 
-  // Filtro de período
-  function getFilterParams() {
-    let params: any = {};
-    const now = new Date();
-    if (period === 'today') {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      params.startDate = d.toISOString();
-      d.setHours(23, 59, 59, 999);
-      params.endDate = d.toISOString();
-    } else if (period === 'week') {
-      const d = new Date();
-      const day = d.getDay();
-      const diffToMonday = day === 0 ? -6 : 1 - day;
-      const monday = new Date(d);
-      monday.setDate(d.getDate() + diffToMonday);
-      monday.setHours(0, 0, 0, 0);
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-      sunday.setHours(23, 59, 59, 999);
-      params.startDate = monday.toISOString();
-      params.endDate = sunday.toISOString();
-    } else if (period === 'month') {
-      const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-      params.startDate = start.toISOString();
-      params.endDate = end.toISOString();
-    } else if (period === 'year') {
-      const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-      const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
-      params.startDate = start.toISOString();
-      params.endDate = end.toISOString();
-    } else if (period === 'custom' && startDate && endDate) {
-      params.startDate = startDate;
-      params.endDate = endDate;
-    }
-    return params;
-  }
-
-  // Carregar dashboard e transações recentes com filtro
+  // recarrega stats e recentes quando filtro muda
   useEffect(() => {
+    if (period === 'custom' && (!startDate || !endDate)) return;
+
     const params = getFilterParams();
-    api.get('/dashboard', { params })
+    api.get('/dashboard',       { params })
       .then(resp => setStats(resp.data))
       .catch(() => setStats(null));
-    api.get('/dashboard/recent', { params })
+    api.get('/dashboard/recent',{ params })
       .then(resp => setRecent(resp.data))
       .catch(() => setRecent([]));
-  }, [period, startDate, endDate, reload]);
+  }, [period, selectedMonth, startDate, endDate, reload]);
 
   function getCategory(catId: string) {
     return categories.find(c => c._id === catId);
@@ -147,6 +149,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-300">
+      {/* logout */}
       <div className="w-full flex justify-end px-10 py-4">
         <button
           onClick={handleLogout}
@@ -157,21 +160,68 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto py-12 px-10">
+        {/* filtros */}
         <div className="flex flex-wrap gap-4 mb-8">
           {periodOptions.map(opt => (
             <button
               key={opt.value}
-              onClick={() => setPeriod(opt.value)}
-              className={`px-5 py-3 rounded-lg font-semibold transition ${period === opt.value ? 'bg-blue-600 text-white shadow' : 'bg-white text-gray-700 border hover:bg-blue-50'}`}
+              onClick={() => {
+                setPeriod(opt.value as 'today');
+                setSelectedMonth('');
+                setStartDate(currentDate);
+                setEndDate(currentDate);
+              }}
+              className={`px-5 py-3 rounded-lg font-semibold transition ${
+                period === opt.value
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'bg-white text-gray-700 border hover:bg-blue-50'
+              }`}
             >
               {opt.label}
             </button>
           ))}
-          <input type="date" onChange={e => { setPeriod('custom'); setStartDate(e.target.value); }} className="border rounded px-3 py-2" />
-          <span className="px-1">até</span>
-          <input type="date" onChange={e => { setPeriod('custom'); setEndDate(e.target.value); }} className="border rounded px-3 py-2" />
+
+          {/* mês/ano */}
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={e => {
+              if (e.target.value) {
+                setPeriod('month');
+                setSelectedMonth(e.target.value);
+              } else {
+                setPeriod('today');
+                setSelectedMonth(currentYearMonth);
+                setStartDate(currentDate);
+                setEndDate(currentDate);
+              }
+            }}
+            className="border rounded px-3 py-2"
+          />
+
+          {/* custom */}
+          <input
+            type="date"
+            value={startDate}
+            onChange={e => {
+              setPeriod('custom');
+              setStartDate(e.target.value);
+            }}
+            className="border rounded px-3 py-2"
+          />
+          <span className="px-1 self-center">até</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => {
+              setPeriod('custom');
+              setEndDate(e.target.value);
+            }}
+            className="border rounded px-3 py-2"
+          />
         </div>
 
+        {/* cards de saldo */}
         {stats && (
           <div className="grid grid-cols-4 gap-8 mb-10">
             <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
@@ -205,7 +255,9 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* gráfico e tabela */}
         <div className="grid grid-cols-2 gap-10">
+          {/* gastos por categoria */}
           <div className="bg-white rounded-2xl shadow p-10 flex flex-col items-center min-h-[350px]">
             <h3 className="font-bold mb-8 text-lg">Gastos por Categoria</h3>
             {stats && (
@@ -220,7 +272,7 @@ export default function Dashboard() {
                   outerRadius={100}
                   label={({ percent = 0 }) => `${(percent * 100).toFixed(0)}%`}
                 >
-                  {stats.byCategory.map((entry) => (
+                  {stats.byCategory.map(entry => (
                     <Cell
                       key={entry.category}
                       fill={getCategory(entry.category)?.color || '#8884d8'}
@@ -232,11 +284,13 @@ export default function Dashboard() {
             )}
             {stats && (
               <div className="grid grid-cols-2 gap-x-10 gap-y-2 mt-6 w-full">
-                {stats.byCategory.map((cat) => {
+                {stats.byCategory.map(cat => {
                   const c = getCategory(cat.category);
                   return (
                     <div key={cat.category} className="flex items-center gap-2">
-                      <span className="text-xl" style={{ color: c?.color }}>{categoryIcons[c?.name || 'Outros']}</span>
+                      <span className="text-xl" style={{ color: c?.color }}>
+                        {categoryIcons[c?.name || 'Outros']}
+                      </span>
                       <span>{c?.name}</span>
                       <span className="ml-auto font-semibold">{formatMoney(cat.value)}</span>
                     </div>
@@ -246,6 +300,7 @@ export default function Dashboard() {
             )}
           </div>
 
+          {/* transações recentes */}
           <div className="bg-white rounded-2xl shadow p-10 overflow-x-auto min-h-[350px] flex flex-col justify-between">
             <div>
               <h3 className="text-lg font-bold text-center mb-6">Transações Recentes</h3>
@@ -267,12 +322,19 @@ export default function Dashboard() {
                           <span className="text-lg">{categoryIcons[c?.name || 'Outros']}</span>
                           <span>{c?.name || tx.category}</span>
                         </td>
-                        <td className="text-sm text-gray-500">{new Date(tx.date).toLocaleDateString('pt-BR')}</td>
-                        <td className={`text-right font-bold pr-6 min-w-[120px] ${tx.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
+                        <td className="text-sm text-gray-500">
+                          {new Date(tx.date).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td className={`text-right font-bold pr-6 min-w-[120px] ${
+                          tx.type === 'income' ? 'text-green-600' : 'text-red-500'
+                        }`}>
                           {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
                         </td>
                         <td className="text-center pl-2 min-w-[40px]">
-                          <button onClick={() => setSelectedTx(tx)} className="text-red-500 hover:text-red-700 text-xl">
+                          <button
+                            onClick={() => setSelectedTx(tx)}
+                            className="text-red-500 hover:text-red-700 text-xl"
+                          >
                             🗑️
                           </button>
                         </td>
@@ -288,6 +350,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* confirmação de exclusão */}
         {selectedTx && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
             <div className="bg-white rounded-xl p-8 shadow-xl w-full max-w-md text-center">
@@ -311,6 +374,7 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* botão nova transação */}
         <div className="flex justify-center mt-12">
           <button
             className="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold shadow hover:bg-blue-700 transition text-lg"
