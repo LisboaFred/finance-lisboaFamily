@@ -66,6 +66,9 @@ export default function Dashboard() {
   const [endDate, setEndDate] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [reload, setReload] = useState(0);
+  const [selectedTx, setSelectedTx] = useState<RecentTx | null>(null);
+
+  const navigate = useNavigate();
 
   // Carregar categorias
   useEffect(() => {
@@ -128,11 +131,18 @@ export default function Dashboard() {
     return categories.find(c => c._id === catId);
   }
 
-  const navigate = useNavigate();
-
   function handleLogout() {
     localStorage.removeItem('token');
     navigate('/login');
+  }
+
+  function handleDelete(id: string) {
+    api.delete(`/transactions/${id}`)
+      .then(() => {
+        setReload(r => r + 1);
+        setSelectedTx(null);
+      })
+      .catch(() => alert('Erro ao excluir'));
   }
 
   return (
@@ -147,137 +157,160 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto py-12 px-10">
-
-        {/* Filtros */}
         <div className="flex flex-wrap gap-4 mb-8">
           {periodOptions.map(opt => (
             <button
               key={opt.value}
               onClick={() => setPeriod(opt.value)}
-              className={`px-5 py-3 rounded-lg font-semibold transition ${period === opt.value ? 'bg-blue-600 text-white shadow' : 'bg-white text-gray-700 border hover:bg-blue-50'}`}>
+              className={`px-5 py-3 rounded-lg font-semibold transition ${period === opt.value ? 'bg-blue-600 text-white shadow' : 'bg-white text-gray-700 border hover:bg-blue-50'}`}
+            >
               {opt.label}
             </button>
           ))}
-          <input type="date" onChange={e => {setPeriod('custom'); setStartDate(e.target.value);}} className="border rounded px-3 py-2"/>
+          <input type="date" onChange={e => { setPeriod('custom'); setStartDate(e.target.value); }} className="border rounded px-3 py-2" />
           <span className="px-1">até</span>
-          <input type="date" onChange={e => {setPeriod('custom'); setEndDate(e.target.value);}} className="border rounded px-3 py-2"/>
+          <input type="date" onChange={e => { setPeriod('custom'); setEndDate(e.target.value); }} className="border rounded px-3 py-2" />
         </div>
 
-        {/* Cards */}
         {stats && (
-        <div className="grid grid-cols-4 gap-8 mb-10">
-          <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
-            <span className="text-3xl bg-blue-100 rounded-full p-3">💰</span>
-            <div>
-              <div className="text-gray-400 font-medium">Saldo Atual</div>
-              <div className="text-2xl font-bold"> {formatMoney(stats.balance)} </div>
+          <div className="grid grid-cols-4 gap-8 mb-10">
+            <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
+              <span className="text-3xl bg-blue-100 rounded-full p-3">💰</span>
+              <div>
+                <div className="text-gray-400 font-medium">Saldo Atual</div>
+                <div className="text-2xl font-bold">{formatMoney(stats.balance)}</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
+              <span className="text-3xl bg-green-100 rounded-full p-3">⬆️</span>
+              <div>
+                <div className="text-gray-400 font-medium">Receitas</div>
+                <div className="text-2xl font-bold text-green-600">{formatMoney(stats.totalIncome)}</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
+              <span className="text-3xl bg-red-100 rounded-full p-3">⬇️</span>
+              <div>
+                <div className="text-gray-400 font-medium">Despesas</div>
+                <div className="text-2xl font-bold text-red-500">{formatMoney(stats.totalExpense)}</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
+              <span className="text-3xl bg-orange-100 rounded-full p-3">🟧</span>
+              <div>
+                <div className="text-gray-400 font-medium">Economia</div>
+                <div className="text-2xl font-bold text-orange-500">{formatMoney(stats.savings)}</div>
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
-            <span className="text-3xl bg-green-100 rounded-full p-3">⬆️</span>
-            <div>
-              <div className="text-gray-400 font-medium">Receitas</div>
-              <div className="text-2xl font-bold text-green-600"> {formatMoney(stats.totalIncome)} </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
-            <span className="text-3xl bg-red-100 rounded-full p-3">⬇️</span>
-            <div>
-              <div className="text-gray-400 font-medium">Despesas</div>
-              <div className="text-2xl font-bold text-red-500"> {formatMoney(stats.totalExpense)} </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl shadow p-8 flex items-center gap-6 min-h-[120px]">
-            <span className="text-3xl bg-orange-100 rounded-full p-3">🟧</span>
-            <div>
-              <div className="text-gray-400 font-medium">Economia</div>
-              <div className="text-2xl font-bold text-orange-500">{formatMoney(stats.savings)}</div>
-            </div>
-          </div>
-        </div>
         )}
 
-        {/* Grid 2 colunas: Pizza + Tabela */}
         <div className="grid grid-cols-2 gap-10">
-          {/* Gráfico pizza e legenda */}
           <div className="bg-white rounded-2xl shadow p-10 flex flex-col items-center min-h-[350px]">
             <h3 className="font-bold mb-8 text-lg">Gastos por Categoria</h3>
             {stats && (
-            <PieChart width={360} height={360}>
-              <Pie
-                data={stats.byCategory}
-                dataKey="value"
-                nameKey="category"
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                label={({ percent = 0 }) => `${(percent * 100).toFixed(0)}%`}
-              >
-                {stats.byCategory.map((entry) => (
-                  <Cell
-                    key={entry.category}
-                    fill={getCategory(entry.category)?.color || '#8884d8'}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
+              <PieChart width={360} height={360}>
+                <Pie
+                  data={stats.byCategory}
+                  dataKey="value"
+                  nameKey="category"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  label={({ percent = 0 }) => `${(percent * 100).toFixed(0)}%`}
+                >
+                  {stats.byCategory.map((entry) => (
+                    <Cell
+                      key={entry.category}
+                      fill={getCategory(entry.category)?.color || '#8884d8'}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
             )}
-            {/* Legenda */}
             {stats && (
-            <div className="grid grid-cols-2 gap-x-10 gap-y-2 mt-6 w-full">
-              {stats.byCategory.map((cat) => {
-                const c = getCategory(cat.category);
-                return (
-                  <div key={cat.category} className="flex items-center gap-2">
-                    <span className="text-xl" style={{ color: c?.color }}>{categoryIcons[c?.name || 'Outros']}</span>
-                    <span>{c?.name}</span>
-                    <span className="ml-auto font-semibold">{formatMoney(cat.value)}</span>
-                  </div>
-                );
-              })}
-            </div>
+              <div className="grid grid-cols-2 gap-x-10 gap-y-2 mt-6 w-full">
+                {stats.byCategory.map((cat) => {
+                  const c = getCategory(cat.category);
+                  return (
+                    <div key={cat.category} className="flex items-center gap-2">
+                      <span className="text-xl" style={{ color: c?.color }}>{categoryIcons[c?.name || 'Outros']}</span>
+                      <span>{c?.name}</span>
+                      <span className="ml-auto font-semibold">{formatMoney(cat.value)}</span>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
 
-          {/* Transações Recentes */}
-          <div className="bg-white rounded-2xl shadow p-10 overflow-x-auto min-h-[350px]">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg">Transações Recentes</h3>
+          <div className="bg-white rounded-2xl shadow p-10 overflow-x-auto min-h-[350px] flex flex-col justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-center mb-6">Transações Recentes</h3>
+              <table className="w-full text-base">
+                <thead>
+                  <tr className="text-gray-400">
+                    <th className="text-left whitespace-nowrap">Categoria</th>
+                    <th className="text-left whitespace-nowrap">Data</th>
+                    <th className="text-center whitespace-nowrap">Valor</th>
+                    <th className="text-center whitespace-nowrap">Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recent.map(tx => {
+                    const c = getCategory(tx.category);
+                    return (
+                      <tr key={tx._id} className="border-b last:border-b-0">
+                        <td className="py-3 flex items-center gap-2 font-semibold max-w-[160px] truncate">
+                          <span className="text-lg">{categoryIcons[c?.name || 'Outros']}</span>
+                          <span>{c?.name || tx.category}</span>
+                        </td>
+                        <td className="text-sm text-gray-500">{new Date(tx.date).toLocaleDateString('pt-BR')}</td>
+                        <td className={`text-right font-bold pr-6 min-w-[120px] ${tx.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
+                          {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
+                        </td>
+                        <td className="text-center pl-2 min-w-[40px]">
+                          <button onClick={() => setSelectedTx(tx)} className="text-red-500 hover:text-red-700 text-xl">
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 text-right">
               <a href="#" className="text-blue-500 text-sm font-medium hover:underline">Ver todas</a>
             </div>
-            <table className="w-full text-base">
-              <thead>
-                <tr className="text-gray-400">
-                  <th className="text-left whitespace-nowrap">Transação</th>
-                  <th className="text-left whitespace-nowrap">Categoria</th>
-                  <th className="text-right whitespace-nowrap">Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map(tx => {
-                  const c = getCategory(tx.category);
-                  return (
-                    <tr key={tx._id} className="border-b last:border-b-0">
-                      <td className="py-3 flex items-center gap-2 font-semibold max-w-[180px] truncate">
-                        <span className="text-lg">{categoryIcons[c?.name || 'Outros']}</span>
-                        <span>{tx.description}</span>
-                        <div className="text-xs text-gray-400 block">{new Date(tx.date).toLocaleDateString('pt-BR')}</div>
-                      </td>
-                      <td className="max-w-[160px] truncate">{c?.name || tx.category}</td>
-                      <td className={`text-right font-bold ${tx.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
-                        {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           </div>
         </div>
 
-        {/* Botão */}
+        {selectedTx && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+            <div className="bg-white rounded-xl p-8 shadow-xl w-full max-w-md text-center">
+              <h2 className="text-lg font-bold mb-4">Confirmar</h2>
+              <p className="mb-6">Deseja realmente excluir essa transação?</p>
+              <div className="flex justify-around gap-4">
+                <button
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                  onClick={() => handleDelete(selectedTx._id)}
+                >
+                  Excluir
+                </button>
+                <button
+                  className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                  onClick={() => setSelectedTx(null)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-center mt-12">
           <button
             className="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold shadow hover:bg-blue-700 transition text-lg"
@@ -286,7 +319,7 @@ export default function Dashboard() {
             + Registrar Nova Transação
           </button>
         </div>
-        {/* Modal */}
+
         {modalOpen && (
           <NewTransactionModal
             onClose={() => setModalOpen(false)}
