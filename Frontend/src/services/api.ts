@@ -1,4 +1,3 @@
-// src/services/api.ts
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
