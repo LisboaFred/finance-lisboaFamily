@@ -5,6 +5,7 @@ import Category from './src/models/Category';
 dotenv.config();
 
 const categories = [
+  { name: 'Salário', color: '#22c55e'},
   { name: 'Alimentação', color: '#FF9800' },
   { name: 'Transporte', color: '#03A9F4' },
   { name: 'Saúde', color: '#4CAF50' },
