@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   PieChart, Pie, Cell, Tooltip
 } from 'recharts';
@@ -39,102 +39,106 @@ interface RecentTx {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userName = user.name || 'Usuário';
 
-  // formatação helpers
+// formatação helpers
   const pad = (n: number) => n.toString().padStart(2, '0');
   const today = new Date();
   const currentYearMonth = `${today.getFullYear()}-${pad(today.getMonth() + 1)}`;
-  const currentDate      = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  const currentDate = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
-  // filtros
-  const [period, setPeriod]               = useState<'today' | 'month' | 'custom'>('today');
+// filtros
+  const [period, setPeriod] = useState<'today' | 'month' | 'custom'>('today');
   const [selectedMonth, setSelectedMonth] = useState<string>(currentYearMonth);
-  const [startDate, setStartDate]         = useState<string>(currentDate);
-  const [endDate, setEndDate]             = useState<string>(currentDate);
-
-  // dados
+  const [startDate, setStartDate] = useState<string>(currentDate);
+  const [endDate, setEndDate] = useState<string>(currentDate);
+// dados
   const [categories, setCategories] = useState<Category[]>([]);
-  const [stats, setStats]           = useState<DashboardStats | null>(null);
-  const [recent, setRecent]         = useState<RecentTx[]>([]);
-  const [modalOpen, setModalOpen]   = useState(false);
-  const [reload, setReload]         = useState(0);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recent, setRecent] = useState<RecentTx[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [reload, setReload] = useState(0);
   const [selectedTx, setSelectedTx] = useState<RecentTx | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
 
-  const periodOptions = [
-    { label: 'Hoje', value: 'today' },
-  ];
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !(menuRef.current as any).contains(e.target)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  const categoryIcons: Record<string,string> = {
+  const periodOptions = [{ label: 'Hoje', value: 'today' }];
+  const categoryIcons: Record<string, string> = {
     Moradia: '🏠',
     Alimentação: '🍔',
     Transporte: '🚗',
     Lazer: '🎉',
     Saúde: '💊',
     Outros: '📦',
-    Receita: '💸',
-    Educação: '📚'
+    Salário: '💸',
+    Educação: '📚',
+    
   };
 
   function formatMoney(v: number) {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  // monta start/end como ISO UTC
   function getFilterParams() {
     const params: any = {};
-
     if (period === 'today') {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
       const end = new Date();
       end.setHours(23, 59, 59, 999);
       params.startDate = start.toISOString();
-      params.endDate   = end.toISOString();
-
+      params.endDate = end.toISOString();
     } else if (period === 'month' && selectedMonth) {
       const [y, m] = selectedMonth.split('-').map(Number);
       const start = new Date(y, m - 1, 1, 0, 0, 0, 0);
       const lastDay = new Date(y, m, 0).getDate();
-      const end   = new Date(y, m - 1, lastDay, 23, 59, 59, 999);
+      const end = new Date(y, m - 1, lastDay, 23, 59, 59, 999);
       params.startDate = start.toISOString();
-      params.endDate   = end.toISOString();
-
+      params.endDate = end.toISOString();
     } else if (period === 'custom' && startDate && endDate) {
       const start = new Date(`${startDate}T00:00:00`);
-      const end   = new Date(`${endDate}T23:59:59.999`);
+      const end = new Date(`${endDate}T23:59:59.999`);
       params.startDate = start.toISOString();
-      params.endDate   = end.toISOString();
+      params.endDate = end.toISOString();
     }
-
     return params;
   }
 
-  // carrega categorias
   useEffect(() => {
     api.get('/categories')
       .then(resp => setCategories(resp.data))
       .catch(() => setCategories([]));
   }, []);
 
-  // recarrega stats e recentes quando filtro muda
   useEffect(() => {
     if (period === 'custom' && (!startDate || !endDate)) return;
-
     const params = getFilterParams();
-    api.get('/dashboard',       { params })
+    api.get('/dashboard', { params })
       .then(resp => setStats(resp.data))
       .catch(() => setStats(null));
-    api.get('/dashboard/recent',{ params })
+    api.get('/dashboard/recent', { params })
       .then(resp => setRecent(resp.data))
       .catch(() => setRecent([]));
   }, [period, selectedMonth, startDate, endDate, reload]);
 
-  function getCategory(catId: string) {
-    return categories.find(c => c._id === catId);
+  function getCategory(id: string) {
+    return categories.find(cat => cat._id === id);
   }
 
   function handleLogout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
   }
 
@@ -149,14 +153,32 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-300">
-      {/* logout */}
-      <div className="w-full flex justify-end px-10 py-4">
-        <button
-          onClick={handleLogout}
-          className="text-sm text-red-600 font-semibold hover:underline"
-        >
-          Sair
-        </button>
+      <div className="bg-white px-10 py-4 flex justify-between items-center shadow-md">
+        <div className="flex items-center gap-2 text-blue-600 font-bold text-lg">
+          <span className="text-xl">💸</span>
+          Lisboa Finances
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600">Olá, {userName}</span>
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="bg-blue-100 text-blue-600 font-bold w-8 h-8 rounded-full"
+            >
+              {userName.charAt(0).toUpperCase()}
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 mt-2 bg-white border rounded shadow px-4 py-2 z-50">
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-red-600 font-medium hover:underline"
+                >
+                  Sair
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto py-12 px-10">
@@ -310,7 +332,7 @@ export default function Dashboard() {
                     <th className="text-left whitespace-nowrap">Categoria</th>
                     <th className="text-left whitespace-nowrap">Data</th>
                     <th className="text-center whitespace-nowrap">Valor</th>
-                    <th className="text-center whitespace-nowrap">Ação</th>
+                    <th className="text-center whitespace-nowrap">Excluir</th>
                   </tr>
                 </thead>
                 <tbody>
