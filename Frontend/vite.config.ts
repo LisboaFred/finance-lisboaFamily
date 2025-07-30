@@ -12,7 +12,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000', // troque a porta se seu backend rodar em outra
+        target: 'https://financelisboabackend.onrender.com', // troque a porta se seu backend rodar em outra
         changeOrigin: true,
         // rewrite: path => path.replace(/^\/api/, '') // use se seu backend NÃO usa '/api'
       }

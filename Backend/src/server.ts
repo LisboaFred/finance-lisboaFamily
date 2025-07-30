@@ -23,14 +23,19 @@ app.use(helmet({
       scriptSrc:  ["'self'"],
       styleSrc:   ["'self'", 'https:'],
       imgSrc:     ["'self'", 'data:'],
-      connectSrc: ["'self'"],
+      connectSrc: [
+        "'self'",
+        "https://finance-lisboa-family.vercel.app",
+        "http://localhost:5173"
+      ],
       fontSrc:    ["'self'", 'https:'],
       objectSrc:  ["'none'"]
     }
   }
 }));
 app.use(cors({origin: [
-    'https://finance-lisboa-family.vercel.app'
+    'https://finance-lisboa-family.vercel.app',
+    'http://localhost:5173'
   ],
   credentials: true}));
 app.use(express.json());
