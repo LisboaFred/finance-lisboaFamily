@@ -1,7 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
-  baseURL: '/api', // ou http://localhost:3000/api, se seu backend rodar em outra porta
+  baseURL: 'https://financelisboabackend.onrender.com/api',
 });
 
 api.interceptors.request.use(
