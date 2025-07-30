@@ -13,6 +13,7 @@ export default function Login() {
     e.preventDefault();
     try {
       const resp = await api.post('/auth/login', { email, password });
+      localStorage.setItem('user', JSON.stringify(resp.data.user));
       login(resp.data.token, resp.data.user); // <-- usa o contexto
       nav('/dashboard');
     } catch (err: any) {
