@@ -3,7 +3,11 @@ import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
 
-export const register = async (req: Request, res: Response): Promise<void> => {
+export const register = async (req: Request, res: Response) => {
+  return res.status(403).json({ message: 'Cadastro de usuários está desabilitado.' });
+};
+
+/*export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -22,7 +26,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   } catch (error: any) {
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
-};
+}; */
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
