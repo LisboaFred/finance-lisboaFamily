@@ -14,7 +14,10 @@ export function verifyToken(req: Request, res: Response, next: NextFunction) {
 
   try {
     // Use o mesmo segredo do login!
-    const secret = process.env.JWT_SECRET || 'Fred1201';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET não definido nas variáveis de ambiente');
+    }
     const decoded = jwt.verify(token, secret);
     // Guarde o user (pode ser user.id, depende de como assinou no login)
     (req as any).user = decoded;

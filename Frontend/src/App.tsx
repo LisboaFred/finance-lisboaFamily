@@ -5,9 +5,10 @@ import Dashboard from './components/pages/Dashboard';
 import Transactions from './components/pages/Transaction';
 import Settings from './components/pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
+import { useAuth } from './context/AuthContext';
 
 export default function App() {
-  const isLogged = !!localStorage.getItem('token');
+  const { isLogged } = useAuth();
 
   return (
     <Routes>
