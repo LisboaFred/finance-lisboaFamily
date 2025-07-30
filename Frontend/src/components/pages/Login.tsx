@@ -67,9 +67,9 @@ export default function Login() {
           </button>
         </form>
         <p className="mt-6 text-center w-full">
-          <span className="inline-block w-full py-2 border border-yellow-100 rounded-lg text-yellow-700 font-semibold bg-yellow-50">
-            Para criar uma conta, entre em contato.
-          </span>
+          <Link to="/register" className="inline-block w-full py-2 border border-blue-100 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition">
+            Criar conta
+          </Link>
         </p>
       </div>
     </div>
