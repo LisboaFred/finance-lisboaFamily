@@ -84,6 +84,9 @@ export const getRecentTransactions = async (req: Request, res: Response) => {
   if (startDate && endDate) {
     filter.date = { $gte: new Date(startDate as string), $lte: new Date(endDate as string) };
   }
-  const txs = await Transaction.find(filter).sort({ date: -1 }).limit(5);
+  const txs = await Transaction.find(filter)
+  .sort({ date: -1 })
+  .limit(5)
+  .populate('category', 'name');
   res.json(txs);
 };
