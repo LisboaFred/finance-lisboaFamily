@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import {
   PieChart, Pie, Cell, Tooltip
 } from 'recharts';
@@ -83,7 +83,11 @@ export default function Dashboard() {
     Outros: '📦',
     Salário: '💸',
     Educação: '📚',
-    
+    Vestuário: '👕',
+    Pets: '🐕',
+    Investimentos: '📈',
+    Manutenção: '🔨',
+    Supermercado: '🛒'   
   };
 
   function formatMoney(v: number) {
@@ -150,6 +154,67 @@ export default function Dashboard() {
       })
       .catch(() => alert('Erro ao excluir'));
   }
+
+  const [sortField, setSortField] = useState('');
+  const [sortDir, setSortDir] = useState('asc');
+  const [filter, setFilter] = useState({ categoria: '', data: '', valor: '' });
+
+  const sorted = useMemo(() => {
+    let data = [...recent];
+
+    // Filtros
+    if (filter.categoria) {
+      data = data.filter((tx) => {
+        const c = getCategory(tx.category);
+        return (c?.name || tx.category).toLowerCase().includes(filter.categoria.toLowerCase());
+      });
+    }
+    if (filter.data) {
+      data = data.filter((tx) => new Date(tx.date).toLocaleDateString('pt-BR').includes(filter.data));
+    }
+    if (filter.valor) {
+      data = data.filter((tx) => formatMoney(tx.amount).replace(/[^0-9,-]/g, "").includes(filter.valor));
+    }
+
+    // Ordenação
+    if (sortField) {
+      data.sort((a, b) => {
+        if (sortField === "categoria") {
+          const aField = (getCategory(a.category)?.name ?? a.category ?? "").toString();
+          const bField = (getCategory(b.category)?.name ?? b.category ?? "").toString();
+          if (aField < bField) return sortDir === "asc" ? -1 : 1;
+          if (aField > bField) return sortDir === "asc" ? 1 : -1;
+          return 0;
+        }
+        if (sortField === "data") {
+          const aField = new Date(a.date).getTime() || 0;
+          const bField = new Date(b.date).getTime() || 0;
+          if (aField < bField) return sortDir === "asc" ? -1 : 1;
+          if (aField > bField) return sortDir === "asc" ? 1 : -1;
+          return 0;
+        }
+        if (sortField === "valor") {
+          const aField = a.amount ?? 0;
+          const bField = b.amount ?? 0;
+          if (aField < bField) return sortDir === "asc" ? -1 : 1;
+          if (aField > bField) return sortDir === "asc" ? 1 : -1;
+          return 0;
+        }
+        return 0;
+      });
+    }
+    return data;
+  }, [recent, sortField, sortDir, filter, getCategory, formatMoney]);
+
+  const handleSort = (field: "categoria" | "data" | "valor") => {
+    if (sortField === field) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  };
+
+
 
   return (
     <div className="min-h-screen bg-gray-300">
@@ -310,9 +375,10 @@ export default function Dashboard() {
                   const c = getCategory(cat.category);
                   return (
                     <div key={cat.category} className="flex items-center gap-2">
-                      <span className="text-xl" style={{ color: c?.color }}>
-                        {categoryIcons[c?.name || 'Outros']}
-                      </span>
+                      <span
+                        className="inline-block w-4 h-4 rounded-full mr-2 border border-gray-200"
+                        style={{ backgroundColor: c?.color || '#8884d8' }}
+                      />
                       <span>{c?.name}</span>
                       <span className="ml-auto font-semibold">{formatMoney(cat.value)}</span>
                     </div>
@@ -323,34 +389,41 @@ export default function Dashboard() {
           </div>
 
           {/* transações recentes */}
-          <div className="bg-white rounded-2xl shadow p-10 overflow-x-auto min-h-[350px] flex flex-col justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-center mb-6">Transações Recentes</h3>
+          <div className="bg-white rounded-2xl shadow p-10 min-h-[350px] flex flex-col">
+            <h3 className="text-lg font-bold text-center mb-6">Transações Recentes</h3>            
+            {/* Cabeçalho fixo */}
+            <div className="grid grid-cols-4 text-gray-400 font-semibold px-2 pb-1 select-none" style={{columnGap: 16}}>
+              <div className="cursor-pointer" onClick={() => handleSort("categoria")}>
+                Categoria{sortField === "categoria" && (sortDir === "asc" ? " ▲" : " ▼")}
+              </div>
+              <div className="cursor-pointer" onClick={() => handleSort("data")}>
+                Data{sortField === "data" && (sortDir === "asc" ? " ▲" : " ▼")}
+              </div>
+              <div className="text-center cursor-pointer" onClick={() => handleSort("valor")}>
+                Valor{sortField === "valor" && (sortDir === "asc" ? " ▲" : " ▼")}
+              </div>
+              <div className="text-center">Excluir</div>
+            </div>            
+            {/* Tabela rolável */}
+            <div className="overflow-y-auto" style={{maxHeight: 500}}>
               <table className="w-full text-base">
-                <thead>
-                  <tr className="text-gray-400">
-                    <th className="text-left whitespace-nowrap">Categoria</th>
-                    <th className="text-left whitespace-nowrap">Data</th>
-                    <th className="text-center whitespace-nowrap">Valor</th>
-                    <th className="text-center whitespace-nowrap">Excluir</th>
-                  </tr>
-                </thead>
                 <tbody>
-                  {recent.map(tx => {
+                  {sorted.map((tx) => {
                     const c = getCategory(tx.category);
                     return (
-                      <tr key={tx._id} className="border-b last:border-b-0">
+                      <tr key={tx._id} className="border-b last:border-b-0 hover:bg-gray-50">
                         <td className="py-3 flex items-center gap-2 font-semibold max-w-[160px] truncate">
-                          <span className="text-lg">{categoryIcons[c?.name || 'Outros']}</span>
+                          <span className="text-lg">{categoryIcons[c?.name || "Outros"]}</span>
                           <span>{c?.name || tx.category}</span>
                         </td>
                         <td className="text-sm text-gray-500">
-                          {new Date(tx.date).toLocaleDateString('pt-BR')}
+                          {new Date(tx.date).toLocaleDateString("pt-BR")}
                         </td>
                         <td className={`text-right font-bold pr-6 min-w-[120px] ${
-                          tx.type === 'income' ? 'text-green-600' : 'text-red-500'
+                          tx.type === "income" ? "text-green-600" : "text-red-500"
                         }`}>
-                          {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
+                          {tx.type === "income" ? "+" : "-"}
+                          {formatMoney(tx.amount)}
                         </td>
                         <td className="text-center pl-2 min-w-[40px]">
                           <button
@@ -363,11 +436,15 @@ export default function Dashboard() {
                       </tr>
                     );
                   })}
+                  {sorted.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="text-center py-6 text-gray-400">
+                        Nenhuma transação encontrada.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
-            </div>
-            <div className="mt-4 text-right">
-              <a href="#" className="text-blue-500 text-sm font-medium hover:underline">Ver todas</a>
             </div>
           </div>
         </div>
