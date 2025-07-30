@@ -30,7 +30,7 @@ app.use(helmet({
   }
 }));
 app.use(cors({origin: [
-    'https://finance-lisboa-family.vercel.app',
+    'https://finance-lisboa-family.vercel.app'
   ],
   credentials: true}));
 app.use(express.json());
