@@ -86,7 +86,6 @@ export const getRecentTransactions = async (req: Request, res: Response) => {
   }
   const txs = await Transaction.find(filter)
   .sort({ date: -1 })
-  .limit(5)
   .populate('category', 'name');
   res.json(txs);
 };
