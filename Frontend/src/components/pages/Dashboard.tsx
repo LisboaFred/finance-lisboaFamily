@@ -23,7 +23,7 @@ interface DashboardStats {
   balance: number;
   totalIncome: number;
   totalExpense: number;
-  savings: number;
+  savingsPercent: number;
   byCategory: CategoryStat[];
   history: HistoryPoint[];
 }
@@ -41,6 +41,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const userName = user.name || 'Usuário';
+
+// aba principal
+  const [tab, setTab] = useState<'rapido' | 'completo' | 'relatorio'>('completo');
 
 // formatação helpers
   const pad = (n: number) => n.toString().padStart(2, '0');
@@ -247,7 +250,28 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto py-12 px-10">
+      <div className="max-w-7xl mx-auto py-12 px-10 flex gap-4">
+        <button
+          onClick={() => setTab('rapido')}
+          className={`px-5 py-2 rounded ${tab === 'rapido' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600'}`}
+        >
+          Dados Rápidos
+        </button>
+        <button
+          onClick={() => setTab('completo')}
+          className={`px-5 py-2 rounded ${tab === 'completo' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600'}`}
+        >
+          Dados Completos
+        </button>
+        <button
+          onClick={() => setTab('relatorio')}
+          className={`px-5 py-2 rounded ${tab === 'relatorio' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600'}`}
+        >
+          Relatórios
+        </button>
+      </div>
+
+      <div className="max-w-7xl mx-auto py-1 px-10">
         {/* filtros */}
         <div className="flex flex-wrap gap-4 mb-8">
           {periodOptions.map(opt => (
@@ -337,7 +361,9 @@ export default function Dashboard() {
               <span className="text-3xl bg-orange-100 rounded-full p-3">🟧</span>
               <div>
                 <div className="text-gray-400 font-medium">Economia</div>
-                <div className="text-2xl font-bold text-orange-500">{formatMoney(stats.savings)}</div>
+                <div className="text-2xl font-bold text-orange-500">
+                  {stats.savingsPercent?.toFixed(1)}%
+                </div>
               </div>
             </div>
           </div>
