@@ -87,7 +87,8 @@ export default function Dashboard() {
     Pets: '🐕',
     Investimentos: '📈',
     Manutenção: '🔨',
-    Supermercado: '🛒'   
+    Supermercado: '🛒',
+    Carro: '🚗'
   };
 
   function formatMoney(v: number) {
