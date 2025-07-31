@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import api from '../../services/api';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -12,7 +13,7 @@ export default function Register() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (pass !== confirm) return alert('Senhas não conferem');
-    await axios.post('/api/auth/register', { name, email, password: pass });
+    await api.post('/auth/register', { name, email, password: pass });
     nav('/login');
   }
 
