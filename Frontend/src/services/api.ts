@@ -1,7 +1,9 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://financelisboabackend.onrender.com/api',
+  baseURL: import.meta.env.DEV
+  ? '/api'
+    : 'https://financelisboabackend.onrender.com/api'
 });
 
 api.interceptors.request.use(
