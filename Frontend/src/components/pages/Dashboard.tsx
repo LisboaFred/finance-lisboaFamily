@@ -50,7 +50,7 @@ export default function Dashboard() {
 
 // filtros
   const [period, setPeriod] = useState<'today' | 'month' | 'custom'>('today');
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentYearMonth);
+  const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [startDate, setStartDate] = useState<string>(currentDate);
   const [endDate, setEndDate] = useState<string>(currentDate);
 // dados
