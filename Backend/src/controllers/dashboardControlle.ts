@@ -24,7 +24,9 @@ export const getDashboard = async (req: Request, res: Response): Promise<void> =
 
     // Saldo e economia: receitas - despesas do período
     const balance = totalIncome - totalExpense;
-    const savings = balance; // Economia = receitas - despesas
+    const savingsPercent = totalIncome > 0
+      ? ((totalIncome - totalExpense) / totalIncome) * 100
+      : 0;
 
     // Gastos por categoria (do período)
     const byCategoryAgg = await Transaction.aggregate([
@@ -67,7 +69,7 @@ export const getDashboard = async (req: Request, res: Response): Promise<void> =
       balance,
       totalIncome,
       totalExpense,
-      savings,
+      savingsPercent,
       byCategory,
       history
     });
