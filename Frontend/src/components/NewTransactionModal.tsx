@@ -55,81 +55,114 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg p-6 w-full max-w-md space-y-4">
-        <div className="flex space-x-2">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative space-y-6"
+      >
+        {/* Botão X de fechar */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-7 top-7 text-gray-300 hover:text-red-400 text-3xl font-bold"
+          title="Fechar"
+        >
+          &times;
+        </button>
+
+        {/* Tipo de transação */}
+        <div className="flex gap-2 mb-4">
           <button
             type="button"
             onClick={() => setType('expense')}
-            className={`flex-1 py-2 rounded ${
-              type === 'expense'
-                ? 'bg-red-100 border border-red-500'
-                : 'bg-gray-100'
-            }`}
+            className={`flex-1 py-3 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 transition border-2
+              ${type === 'expense'
+                ? 'bg-red-50 text-red-600 border-red-500 shadow'
+                : 'bg-gray-50 text-gray-400 border-transparent hover:bg-red-50'
+              }`}
           >
-            Despesa
+            <span>🔻</span> Despesa
           </button>
           <button
             type="button"
             onClick={() => setType('income')}
-            className={`flex-1 py-2 rounded ${
-              type === 'income'
-                ? 'bg-green-100 border border-green-500'
-                : 'bg-gray-100'
-            }`}
+            className={`flex-1 py-3 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 transition border-2
+              ${type === 'income'
+                ? 'bg-green-50 text-green-600 border-green-500 shadow'
+                : 'bg-gray-50 text-gray-400 border-transparent hover:bg-green-50'
+              }`}
           >
-            Receita
+            <span>⬆️</span> Receita
           </button>
         </div>
 
-        <select
-          required
-          value={category}
-          onChange={e => setCategory(e.target.value)}
-          className="w-full rounded-md border-gray-300"
-        >
-          <option value="">Selecione uma categoria</option>
-          {categories.map(cat => (
-            <option key={cat._id} value={cat._id}>{cat.name}</option>
-          ))}
-        </select>
+        {/* Categoria */}
+        <div>
+          <label className="block text-gray-700 mb-1 font-medium">Categoria</label>
+          <select
+            required
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
+          >
+            <option value="">Selecione uma categoria</option>
+            {categories.map(cat => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <input
-          type="number"
-          required
-          placeholder="Valor"
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          className="w-full rounded-md border-gray-300 px-3 py-2"
-        />
+        {/* Valor */}
+        <div>
+          <label className="block text-gray-700 mb-1 font-medium">Valor</label>
+          <input
+            type="number"
+            required
+            placeholder="Valor"
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition text-lg"
+          />
+        </div>
 
-        <input
-          type="date"
-          required
-          value={date}
-          onChange={e => setDate(e.target.value)}
-          className="w-full rounded-md border-gray-300 px-3 py-2"
-        />
+        {/* Data */}
+        <div>
+          <label className="block text-gray-700 mb-1 font-medium">Data</label>
+          <input
+            type="date"
+            required
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition text-lg"
+          />
+        </div>
 
-        <input
-          type="text"
-          placeholder="Descrição (opcional)"
-          value={desc}
-          onChange={e => setDesc(e.target.value)}
-          className="w-full rounded-md border-gray-300 px-3 py-2"
-        />
+        {/* Descrição */}
+        <div>
+          <label className="block text-gray-700 mb-1 font-medium">Descrição (opcional)</label>
+          <input
+            type="text"
+            placeholder="Descrição"
+            value={desc}
+            onChange={e => setDesc(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
+          />
+        </div>
 
-        <div className="flex justify-end space-x-2">
+        {/* Ações */}
+        <div className="flex gap-4 justify-end mt-4">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded bg-gray-200"
+            className="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="px-4 py-2 rounded bg-green-500 text-white"
+            className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow transition"
           >
             Confirmar
           </button>
@@ -137,4 +170,5 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
       </form>
     </div>
   );
+
 }
