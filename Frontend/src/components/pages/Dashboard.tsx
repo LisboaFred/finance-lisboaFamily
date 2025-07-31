@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import {
-  PieChart, Pie, Cell, Tooltip
+  PieChart, Pie, Cell, Tooltip,
 } from 'recharts';
 import api from '../../services/api';
 import NewTransactionModal from '../NewTransactionModal';
@@ -367,7 +367,13 @@ export default function Dashboard() {
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  formatter={(value, name, props) => {
+                    // Recupera nome da categoria pelo id
+                    const categoryName = getCategory(props.payload.category)?.name || props.payload.category;
+                    return [`R$ ${value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, categoryName];
+                  }}
+                />
               </PieChart>
             )}
             {stats && (
