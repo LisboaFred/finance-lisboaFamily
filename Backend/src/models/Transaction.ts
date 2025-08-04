@@ -12,6 +12,7 @@ export interface ITransaction extends Document {
   recurringType: 'monthly' | 'weekly' | 'yearly' | null;
   tags:        string[];
   createdAt:   Date;
+  paymentMethod?: 'pix' | 'credito' | 'debito' | 'alelo' | '';
 }
 
 const transactionSchema = new Schema<ITransaction>({
@@ -25,6 +26,7 @@ const transactionSchema = new Schema<ITransaction>({
   recurringType: { type: String, enum: ['monthly','weekly','yearly'], default: null },
   tags:          [{ type: String }],
   createdAt:     { type: Date, default: Date.now },
+  paymentMethod: { type: String, enum: ['pix', 'credito', 'debito', 'alelo', ''], default: ''},
 });
 
 export default model<ITransaction>('Transaction', transactionSchema);
