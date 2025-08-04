@@ -19,6 +19,8 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
   const [date, setDate] = useState<string>(todayStr);
   const [desc, setDesc] = useState('');
   const [categories, setCategories] = useState<{ _id: string; name: string; color?: string }[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credito' | 'debito' | 'alelo'>('pix');
+
 
   // Carrega as categorias
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
       category,
       amount: Number(value),
       date: localDateISO,
+      paymentMethod,
     };
     if (desc.trim() !== '') {
       payload.description = desc.trim();
@@ -126,6 +129,40 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition text-lg"
           />
         </div>
+
+        {/* Categoria */}
+          <div>
+            <label className="block text-gray-700 mb-1 font-medium">Categoria</label>
+            <select
+              required
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
+            >
+              <option value="">Selecione uma categoria</option>
+              {categories.map(cat => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Forma de Pagamento */}
+          <div>
+            <label className="block text-gray-700 mb-1 font-medium">Forma de Pagamento</label>
+            <select
+              required
+              value={paymentMethod}
+              onChange={e => setPaymentMethod(e.target.value as 'pix' | 'credito' | 'debito' | 'alelo')}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
+            >
+              <option value="pix">Pix</option>
+              <option value="credito">Crédito</option>
+              <option value="debito">Débito</option>
+              <option value="alelo">Alelo</option>
+            </select>
+          </div>
 
         {/* Data */}
         <div>
