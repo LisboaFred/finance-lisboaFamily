@@ -129,25 +129,6 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition text-lg"
           />
         </div>
-
-        {/* Categoria */}
-          <div>
-            <label className="block text-gray-700 mb-1 font-medium">Categoria</label>
-            <select
-              required
-              value={category}
-              onChange={e => setCategory(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
-            >
-              <option value="">Selecione uma categoria</option>
-              {categories.map(cat => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Forma de Pagamento */}
           <div>
             <label className="block text-gray-700 mb-1 font-medium">Forma de Pagamento</label>
