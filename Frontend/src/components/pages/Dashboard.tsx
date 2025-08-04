@@ -92,7 +92,11 @@ export default function Dashboard() {
     Investimentos: '📈',
     Manutenção: '🔨',
     Supermercado: '🛒',
-    Carro: '🚗'
+    Carro: '🚗',
+    Academia: '🏋️‍♂️',
+    Presente: '🎁',
+    Assinaturas: '🎥',
+
   };
 
   function formatMoney(v: number) {
