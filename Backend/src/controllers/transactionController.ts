@@ -9,7 +9,13 @@ export const createTransaction = async (req: Request, res: Response): Promise<vo
       res.status(400).json({ errors: errors.array() });
       return;
     }
-    const tx = new Transaction({ ...(req.body as Omit<ITransaction, 'user'>), user: (req as any).user });
+    const body = req.body as Omit<ITransaction, 'user'>;
+    const amount = body.type === "expense"
+      ? -Math.abs(Number(body.amount))
+      : Math.abs(Number(body.amount));
+
+    const tx = new Transaction({ ...body, amount, user: (req as any).user });
+
     const saved = await tx.save();
     res.status(201).json(saved);
   } catch (error: any) {
