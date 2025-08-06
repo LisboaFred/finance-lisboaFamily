@@ -175,64 +175,73 @@ export default function Dashboard() {
     let data = [...recent];
 
     // Filtros
-    if (filter.categoria) {
-      data = data.filter((tx) => {
-        const c = getCategory(tx.category);
-        return (c?.name || tx.category).toLowerCase().includes(filter.categoria.toLowerCase());
-      });
-    }
-    if (filter.data) {
-      data = data.filter((tx) => new Date(tx.date).toLocaleDateString('pt-BR').includes(filter.data));
-    }
-    if (filter.valor) {
-      data = data.filter((tx) => formatMoney(tx.amount).replace(/[^0-9,-]/g, "").includes(filter.valor));
-    }
-     if (filter.pagamento) {
-      data = data.filter((tx) => formatMoney(tx.amount).replace(/[^0-9,-]/g, "").includes(filter.pagamento));
-    }
+      if (filter.categoria) {
+        data = data.filter((tx) => {
+          const c = getCategory(tx.category);
+          return (c?.name || tx.category).toLowerCase().includes(filter.categoria.toLowerCase());
+        });
+      }
 
-    // Ordenação
-    if (sortField) {
-      data.sort((a, b) => {
-        if (sortField === "categoria") {
-          const aField = (getCategory(a.category)?.name ?? a.category ?? "").toString();
-          const bField = (getCategory(b.category)?.name ?? b.category ?? "").toString();
-          if (aField < bField) return sortDir === "asc" ? -1 : 1;
-          if (aField > bField) return sortDir === "asc" ? 1 : -1;
+      if (filter.data) {
+        data = data.filter((tx) => new Date(tx.date).toLocaleDateString('pt-BR').includes(filter.data));
+      }
+      if (filter.valor) {
+        // Opcional: pode deixar para busca por valor textual/número
+        const valorFiltro = filter.valor.replace(/[^\d]/g, "");
+        data = data.filter((tx) => {
+          const valorData = Math.abs(Number(tx.amount)).toString();
+          return valorData.includes(valorFiltro);
+        });
+      }
+
+      if (filter.pagamento) {
+        data = data.filter((tx) => {
+          const label =
+            tx.paymentMethod === 'pix'
+              ? 'pix'
+              : tx.paymentMethod === 'credito'
+              ? 'crédito'
+              : tx.paymentMethod === 'debito'
+              ? 'débito'
+              : tx.paymentMethod || '';
+          return label.toLowerCase().includes(filter.pagamento.toLowerCase());
+        });
+      }
+
+      // Ordenação
+      if (sortField) {
+        data.sort((a, b) => {
+          if (sortField === "categoria") {
+            const aField = (getCategory(a.category)?.name ?? a.category ?? "").toString();
+            const bField = (getCategory(b.category)?.name ?? b.category ?? "").toString();
+            if (aField < bField) return sortDir === "asc" ? -1 : 1;
+            if (aField > bField) return sortDir === "asc" ? 1 : -1;
+            return 0;
+          }
+          if (sortField === "data") {
+            const aField = new Date(a.date).getTime() || 0;
+            const bField = new Date(b.date).getTime() || 0;
+            if (aField < bField) return sortDir === "asc" ? -1 : 1;
+            if (aField > bField) return sortDir === "asc" ? 1 : -1;
+            return 0;
+          }
+          if (sortField === "valor") {
+            const aField = a.amount ?? 0;
+            const bField = b.amount ?? 0;
+            if (aField < bField) return sortDir === "asc" ? -1 : 1;
+            if (aField > bField) return sortDir === "asc" ? 1 : -1;
+            return 0;
+          }
+          if (sortField === "pagamento") {
+            const aField = (a.paymentMethod ?? '').toString();
+            const bField = (b.paymentMethod ?? '').toString();
+            if (aField < bField) return sortDir === "asc" ? -1 : 1;
+            if (aField > bField) return sortDir === "asc" ? 1 : -1;
+            return 0;
+          }
           return 0;
-        }
-        if (sortField === "data") {
-          const aField = new Date(a.date).getTime() || 0;
-          const bField = new Date(b.date).getTime() || 0;
-          if (aField < bField) return sortDir === "asc" ? -1 : 1;
-          if (aField > bField) return sortDir === "asc" ? 1 : -1;
-          return 0;
-        }
-        if (sortField === "valor") {
-          const aField = a.amount ?? 0;
-          const bField = b.amount ?? 0;
-          if (aField < bField) return sortDir === "asc" ? -1 : 1;
-          if (aField > bField) return sortDir === "asc" ? 1 : -1;
-          return 0;
-        }
-        if (filter.pagamento) {
-          data = data.filter((tx) => {
-            const label =
-              tx.paymentMethod === 'pix'
-                ? 'Pix'
-                : tx.paymentMethod === 'credito'
-                ? 'Crédito'
-                : tx.paymentMethod === 'debito'
-                ? 'Débito'
-                : tx.paymentMethod === 'alelo'
-                ? 'Alelo'
-                : '';
-            return label.toLowerCase().includes(filter.pagamento.toLowerCase());
-          });
-        }
-        return 0;
-      });
-    }
+        });
+      }
     return data;
   }, [recent, sortField, sortDir, filter, getCategory, formatMoney]);
 
@@ -450,16 +459,40 @@ export default function Dashboard() {
           {/* transações recentes */}
           <div className="bg-white rounded-2xl shadow p-10 min-h-[350px] flex flex-col">
             <h3 className="text-lg font-bold text-center mb-6">Transações Recentes</h3>
-            {/* Tabela rolável */}
-            <div className="overflow-y-auto" style={{maxHeight: 800}}>
+            {/* Tabela rolável com cabeçalho fixo */}
+            <div className="overflow-y-auto" style={{ maxHeight: 800 }}>
               <table className="w-full text-base" style={{ tableLayout: 'fixed' }}>
                 <thead>
                   <tr className="text-gray-400 font-semibold select-none">
-                    <th className="text-left pl-2" style={{ width: '28%' }}>Categoria</th>
-                    <th className="text-center" style={{ width: '18%' }}>Data</th>
-                    <th className="text-center" style={{ width: '22%' }}>Valor</th>
-                    <th className="text-center" style={{ width: '18%' }}>Pagamento</th>
-                    <th className="text-center" style={{ width: '14%' }}>Excluir</th>
+                    <th
+                      className="text-left pl-2 cursor-pointer"
+                      style={{ width: '32%', whiteSpace: 'nowrap' }}
+                      onClick={() => handleSort("categoria")}
+                    >
+                      Categoria{sortField === "categoria" && (sortDir === "asc" ? " ▲" : " ▼")}
+                    </th>
+                    <th
+                      className="text-center cursor-pointer"
+                      style={{ width: '20%', whiteSpace: 'nowrap' }}
+                      onClick={() => handleSort("data")}
+                    >
+                      Data{sortField === "data" && (sortDir === "asc" ? " ▲" : " ▼")}
+                    </th>
+                    <th
+                      className="text-center cursor-pointer"
+                      style={{ width: '32%', whiteSpace: 'nowrap' }}
+                      onClick={() => handleSort("valor")}
+                    >
+                      Valor{sortField === "valor" && (sortDir === "asc" ? " ▲" : " ▼")}
+                    </th>
+                    <th
+                      className="text-center cursor-pointer"
+                      style={{ width: '24%', whiteSpace: 'nowrap' }}
+                      onClick={() => handleSort("pagamento")}
+                    >
+                      Pagamento{sortField === "pagamento" && (sortDir === "asc" ? " ▲" : " ▼")}
+                    </th>
+                    <th className="text-right" style={{ width: '14%' }}>Excluir</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -470,24 +503,36 @@ export default function Dashboard() {
                         {/* Categoria */}
                         <td
                           className="text-left pl-2 font-semibold truncate"
-                          style={{ width: '28%', maxWidth: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                          style={{
+                            width: '28%',
+                            maxWidth: 200,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
                         >
                           <span className="text-lg">{categoryIcons[c?.name || "Outros"]}</span>
                           <span>{c?.name || tx.category}</span>
                         </td>
                         {/* Data */}
-                        <td className="text-sm text-gray-500 text-center" style={{ width: '18%' }}>
+                        <td className="text-sm text-gray-500 text-center" style={{ width: '16%' }}>
                           {new Date(tx.date).toLocaleDateString("pt-BR")}
                         </td>
                         {/* Valor */}
                         <td
-                          className={`text-right font-bold pr-6 ${tx.type === "income" ? "text-green-600" : "text-red-500"}`}
-                          style={{ width: '22%' }}
+                          className={`text-right font-bold pr-6 ${tx.amount >= 0 ? "text-green-600" : "text-red-500"}`}
+                          style={{
+                            width: '26%',
+                            maxWidth: 160,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
                         >
-                          {tx.type === "income" ? "+" : "-"}{formatMoney(tx.amount)}
+                          {tx.amount >= 0 ? "+" : "-"}{formatMoney(Math.abs(tx.amount))}
                         </td>
                         {/* Pagamento */}
-                        <td className="text-center font-medium" style={{ width: '18%' }}>
+                        <td className="text-center font-medium" style={{ width: '16%' }}>
                           {tx.paymentMethod === 'pix'
                             ? 'Pix'
                             : tx.paymentMethod === 'credito'
@@ -499,7 +544,7 @@ export default function Dashboard() {
                             : ''}
                         </td>
                         {/* Excluir */}
-                        <td className="text-center" style={{ width: '14%' }}>
+                        <td className="text-right" style={{ width: '14%' }}>
                           <button
                             onClick={() => setSelectedTx(tx)}
                             className="text-red-500 hover:text-red-700 text-xl"
@@ -522,7 +567,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-
         {/* confirmação de exclusão */}
         {selectedTx && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
