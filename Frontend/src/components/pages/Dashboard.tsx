@@ -253,7 +253,12 @@ export default function Dashboard() {
     }
   };
 
-
+  const pieData = stats
+    ? stats.byCategory.map(cat => ({
+        ...cat,
+        value: Math.abs(cat.value)
+      }))
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-300">
@@ -412,7 +417,7 @@ export default function Dashboard() {
             {stats && (
               <PieChart width={360} height={360}>
                 <Pie
-                  data={stats.byCategory}
+                  data={pieData}
                   dataKey="value"
                   nameKey="category"
                   cx="50%"
@@ -421,7 +426,7 @@ export default function Dashboard() {
                   outerRadius={100}
                   label={({ percent = 0 }) => `${(percent * 100).toFixed(0)}%`}
                 >
-                  {stats.byCategory.map(entry => (
+                  {pieData.map(entry => (
                     <Cell
                       key={entry.category}
                       fill={getCategory(entry.category)?.color || '#8884d8'}
@@ -439,7 +444,7 @@ export default function Dashboard() {
             )}
             {stats && (
               <div className="grid grid-cols-2 gap-x-10 gap-y-2 mt-6 w-full">
-                {stats.byCategory.map(cat => {
+                {pieData.map(cat => {
                   const c = getCategory(cat.category);
                   return (
                     <div key={cat.category} className="flex items-center gap-2">
@@ -492,7 +497,7 @@ export default function Dashboard() {
                     >
                       Pagamento{sortField === "pagamento" && (sortDir === "asc" ? " ▲" : " ▼")}
                     </th>
-                    <th className="text-right" style={{ width: '14%' }}>Excluir</th>
+                    <th className="text-center" style={{ width: '14%' }}>Excluir</th>
                   </tr>
                 </thead>
                 <tbody>
