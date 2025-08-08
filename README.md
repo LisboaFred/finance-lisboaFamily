@@ -1,5 +1,7 @@
 # Finance Lisboa Family
 
+https://finance-lisboa-family.vercel.app/login
+
 Uma aplicação full-stack com login e dashboard para controle de finanças pessoais, com backend em TypeScript (Node.js, Express) e frontend em React + TypeScript.
 
 ## Estado Atual
