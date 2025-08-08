@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import { toast } from 'sonner';
 
 interface Props {
   onClose: () => void;
   onSuccess?: () => void;
 }
+
+type PaymentMethod = 'pix' | 'credito' | 'debito' | 'alelo';
 
 export default function NewTransactionModal({ onClose, onSuccess }: Props) {
   // Helpers para data de hoje
@@ -18,20 +21,44 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
   const [value, setValue] = useState('');
   const [date, setDate] = useState<string>(todayStr);
   const [desc, setDesc] = useState('');
-  const [categories, setCategories] = useState<{ _id: string; name: string; color?: string }[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credito' | 'debito' | 'alelo'>('pix');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
 
+  // Dados auxiliares
+  const [categories, setCategories] = useState<{ _id: string; name: string; color?: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingCats, setLoadingCats] = useState(false);
 
   // Carrega as categorias
   useEffect(() => {
+    setLoadingCats(true);
     api.get('/categories')
       .then(res => setCategories(res.data))
-      .catch(() => setCategories([]));
+      .catch(err => {
+        const msg = err?.response?.data?.message || 'Erro ao carregar categorias.';
+        toast.error(msg);
+        setCategories([]);
+      })
+      .finally(() => setLoadingCats(false));
   }, []);
 
   // Envio do formulário
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // validações simples no cliente
+    if (!category) {
+      toast.error('Selecione uma categoria.');
+      return;
+    }
+    if (!value || Number.isNaN(Number(value))) {
+      toast.error('Informe um valor válido.');
+      return;
+    }
+    if (!date) {
+      toast.error('Informe a data.');
+      return;
+    }
+
     // Converte "YYYY-MM-DD" em Date local meia-noite
     const [y, m, d] = date.split('-').map(Number);
     const localDateISO = new Date(y, m - 1, d).toISOString();
@@ -47,13 +74,22 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
       payload.description = desc.trim();
     }
 
+    setLoading(true);
     try {
       await api.post('/transactions', payload);
-      if (onSuccess) onSuccess();
-      onClose();
+      toast.success('Transação registrada com sucesso!');
+      onSuccess && onSuccess();
+      onClose(); // fecha somente em caso de sucesso
     } catch (err: any) {
-      console.error('Erro ao salvar transação:', err.response?.data || err.message);
-      alert('Erro ao salvar transação. Verifique os campos.');
+      const apiMsg = err?.response?.data?.message;
+      // mensagens mais específicas se o backend enviar detalhes
+      const fallback =
+        type === 'expense'
+          ? 'Não foi possível registrar a despesa. Tente novamente.'
+          : 'Não foi possível registrar a receita. Tente novamente.';
+      toast.error(apiMsg || fallback);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -74,7 +110,7 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
         </button>
 
         {/* Tipo de transação */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-2">
           <button
             type="button"
             onClick={() => setType('expense')}
@@ -104,11 +140,12 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
           <label className="block text-gray-700 mb-1 font-medium">Categoria</label>
           <select
             required
+            disabled={loadingCats}
             value={category}
             onChange={e => setCategory(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition disabled:opacity-60"
           >
-            <option value="">Selecione uma categoria</option>
+            <option value="">{loadingCats ? 'Carregando...' : 'Selecione uma categoria'}</option>
             {categories.map(cat => (
               <option key={cat._id} value={cat._id}>
                 {cat.name}
@@ -128,22 +165,26 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
             onChange={e => setValue(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition text-lg"
           />
+          <p className="text-xs text-gray-400 mt-1">
+            Use número positivo. O tipo (Despesa/Receita) define o sinal no back.
+          </p>
         </div>
-          {/* Forma de Pagamento */}
-          <div>
-            <label className="block text-gray-700 mb-1 font-medium">Forma de Pagamento</label>
-            <select
-              required
-              value={paymentMethod}
-              onChange={e => setPaymentMethod(e.target.value as 'pix' | 'credito' | 'debito' | 'alelo')}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
-            >
-              <option value="pix">Pix</option>
-              <option value="credito">Crédito</option>
-              <option value="debito">Débito</option>
-              <option value="alelo">Alelo</option>
-            </select>
-          </div>
+
+        {/* Forma de Pagamento */}
+        <div>
+          <label className="block text-gray-700 mb-1 font-medium">Forma de Pagamento</label>
+          <select
+            required
+            value={paymentMethod}
+            onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
+          >
+            <option value="pix">Pix</option>
+            <option value="credito">Crédito</option>
+            <option value="debito">Débito</option>
+            <option value="alelo">Alelo</option>
+          </select>
+        </div>
 
         {/* Data */}
         <div>
@@ -170,7 +211,7 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
         </div>
 
         {/* Ações */}
-        <div className="flex gap-4 justify-end mt-4">
+        <div className="flex gap-4 justify-end mt-2">
           <button
             type="button"
             onClick={onClose}
@@ -180,13 +221,13 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
           </button>
           <button
             type="submit"
-            className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow transition"
+            disabled={loading}
+            className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow transition disabled:opacity-60"
           >
-            Confirmar
+            {loading ? 'Salvando...' : 'Confirmar'}
           </button>
         </div>
       </form>
     </div>
   );
-
 }
