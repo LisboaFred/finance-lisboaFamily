@@ -1,23 +1,33 @@
+// components/pages/Login.tsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'sonner';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const nav = useNavigate();
   const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
     try {
       const resp = await api.post('/auth/login', { email, password });
       localStorage.setItem('user', JSON.stringify(resp.data.user));
-      login(resp.data.token, resp.data.user); // <-- usa o contexto
+      login(resp.data.token, resp.data.user);
+      toast.success(`Bem-vindo(a), ${resp.data.user.name}!`);
       nav('/dashboard');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Falha ao fazer login');
+      const message =
+        err.response?.data?.message ||
+        'Falha ao fazer login. Verifique suas credenciais.';
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -27,9 +37,7 @@ export default function Login() {
         <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-400 rounded-full flex items-center justify-center mb-2">
           <span className="text-white text-3xl">💲</span>
         </div>
-        <h1 className="text-2xl font-bold text-center mb-8">
-          Lisboa Finance
-        </h1>
+        <h1 className="text-2xl font-bold text-center mb-8">Lisboa Finance</h1>
         <form onSubmit={handleSubmit} className="space-y-5 w-full">
           <div>
             <label className="block text-sm font-medium">Email</label>
@@ -61,13 +69,17 @@ export default function Login() {
           </div>
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-bold shadow hover:scale-105 transition"
+            disabled={loading}
+            className="w-full py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-bold shadow hover:scale-105 transition disabled:opacity-50"
           >
-            Conectar
+            {loading ? 'Conectando...' : 'Conectar'}
           </button>
         </form>
         <p className="mt-6 text-center w-full">
-          <Link to="/register" className="inline-block w-full py-2 border border-blue-100 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition">
+          <Link
+            to="/register"
+            className="inline-block w-full py-2 border border-blue-100 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition"
+          >
             Criar conta
           </Link>
         </p>
