@@ -22,6 +22,9 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
   const [date, setDate] = useState<string>(todayStr);
   const [desc, setDesc] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
+  
+  // NOVO ESTADO: Número de parcelas (padrão 1)
+  const [installments, setInstallments] = useState<number>(1);
 
   // Dados auxiliares
   const [categories, setCategories] = useState<{ _id: string; name: string; color?: string }[]>([]);
@@ -45,7 +48,7 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // validações simples no cliente
+    // Validações simples
     if (!category) {
       toast.error('Selecione uma categoria.');
       return;
@@ -59,34 +62,75 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
       return;
     }
 
-    // Converte "YYYY-MM-DD" em Date local meia-noite
-    const [y, m, d] = date.split('-').map(Number);
-    const localDateISO = new Date(y, m - 1, d).toISOString();
+    const numericValue = Number(value);
+    const finalDesc = desc.trim();
 
-    const payload: any = {
-      type,
-      category,
-      amount: Number(value),
-      date: localDateISO,
-      paymentMethod,
-    };
-    if (desc.trim() !== '') {
-      payload.description = desc.trim();
-    }
+    // Data base para cálculo (meia-noite local para evitar timezone issues básicos)
+    const [y, m, d] = date.split('-').map(Number);
+    // Nota: Mês no Date construtor é index 0 (Jan = 0)
+    const baseDateObj = new Date(y, m - 1, d);
 
     setLoading(true);
     try {
-      await api.post('/transactions', payload);
+      
+      // LÓGICA DE PARCELAMENTO (Se for Crédito E parcelas > 1)
+      if (paymentMethod === 'credito' && installments > 1) {
+        
+        // Valor de cada parcela
+        // Nota: toFixed(2) ajuda a evitar dízimas, mas pode gerar diferença de centavos no total.
+        // Para uso pessoal simples, isso costuma ser aceitável.
+        const installmentValue = Number((numericValue / installments).toFixed(2));
+        
+        const promises = [];
+
+        for (let i = 0; i < installments; i++) {
+          // Clona a data base e adiciona 'i' meses
+          const txDate = new Date(baseDateObj);
+          txDate.setMonth(baseDateObj.getMonth() + i);
+
+          const payload = {
+            type,
+            category,
+            amount: installmentValue,
+            date: txDate.toISOString(),
+            paymentMethod,
+            description: finalDesc ? `${finalDesc} (${i + 1}/${installments})` : `Parcela (${i + 1}/${installments})`,
+            // Enviamos metadados extras se o backend suportar (conforme alteração no Transaction.ts)
+            installmentCount: i + 1,
+            installmentTotal: installments
+          };
+
+          promises.push(api.post('/transactions', payload));
+        }
+
+        // Aguarda todas as requisições
+        await Promise.all(promises);
+
+      } else {
+        // LÓGICA PADRÃO (Sem parcelamento)
+        const payload: any = {
+          type,
+          category,
+          amount: numericValue,
+          date: baseDateObj.toISOString(),
+          paymentMethod,
+        };
+        if (finalDesc !== '') {
+          payload.description = finalDesc;
+        }
+
+        await api.post('/transactions', payload);
+      }
+
       toast.success('Transação registrada com sucesso!');
       onSuccess && onSuccess();
-      onClose(); // fecha somente em caso de sucesso
+      onClose(); 
     } catch (err: any) {
       const apiMsg = err?.response?.data?.message;
-      // mensagens mais específicas se o backend enviar detalhes
       const fallback =
         type === 'expense'
-          ? 'Não foi possível registrar a despesa. Tente novamente.'
-          : 'Não foi possível registrar a receita. Tente novamente.';
+          ? 'Não foi possível registrar a despesa.'
+          : 'Não foi possível registrar a receita.';
       toast.error(apiMsg || fallback);
     } finally {
       setLoading(false);
@@ -156,39 +200,64 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
 
         {/* Valor */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Valor</label>
+          <label className="block text-gray-700 mb-1 font-medium">Valor Total</label>
           <input
             type="number"
             required
-            placeholder="Valor"
+            placeholder="Valor total da compra"
             value={value}
             onChange={e => setValue(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition text-lg"
           />
           <p className="text-xs text-gray-400 mt-1">
-            Use número positivo. O tipo (Despesa/Receita) define o sinal no back.
+            {installments > 1 
+              ? `Será dividido em ${installments}x de R$ ${(Number(value)/installments).toFixed(2)}` 
+              : "Use número positivo."}
           </p>
         </div>
 
-        {/* Forma de Pagamento */}
+        {/* Forma de Pagamento e Parcelas */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Forma de Pagamento</label>
-          <select
-            required
-            value={paymentMethod}
-            onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
-          >
-            <option value="pix">Pix</option>
-            <option value="credito">Crédito</option>
-            <option value="debito">Débito</option>
-            <option value="alelo">Alelo</option>
-          </select>
+          <label className="block text-gray-700 mb-1 font-medium">Pagamento / Parcelas</label>
+          <div className="flex gap-2">
+            <select
+              required
+              value={paymentMethod}
+              onChange={e => {
+                const method = e.target.value as PaymentMethod;
+                setPaymentMethod(method);
+                // Se mudar para algo que não é crédito, reseta as parcelas
+                if (method !== 'credito') setInstallments(1);
+              }}
+              className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition"
+            >
+              <option value="pix">Pix</option>
+              <option value="credito">Crédito</option>
+              <option value="debito">Débito</option>
+              <option value="alelo">Alelo</option>
+            </select>
+
+            {/* Dropdown de parcelas aparece apenas se for Crédito */}
+            {paymentMethod === 'credito' && (
+              <select
+                value={installments}
+                onChange={e => setInstallments(Number(e.target.value))}
+                className="w-28 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-400 transition text-center font-semibold"
+                title="Número de parcelas"
+              >
+                {[...Array(12)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1}x
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
 
         {/* Data */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Data</label>
+          <label className="block text-gray-700 mb-1 font-medium">Data {installments > 1 ? '(1ª Parcela)' : ''}</label>
           <input
             type="date"
             required
@@ -224,7 +293,7 @@ export default function NewTransactionModal({ onClose, onSuccess }: Props) {
             disabled={loading}
             className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow transition disabled:opacity-60"
           >
-            {loading ? 'Salvando...' : 'Confirmar'}
+            {loading ? 'Processando...' : 'Confirmar'}
           </button>
         </div>
       </form>

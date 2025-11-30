@@ -13,6 +13,9 @@ export interface ITransaction extends Document {
   tags:        string[];
   createdAt:   Date;
   paymentMethod?: 'pix' | 'credito' | 'debito' | 'alelo' | '';
+  // NOVOS CAMPOS PARA PARCELAMENTO
+  installmentCount?: number; // Qual o número desta parcela (ex: 1)
+  installmentTotal?: number; // Total de parcelas (ex: 12)
 }
 
 const transactionSchema = new Schema<ITransaction>({
@@ -27,6 +30,10 @@ const transactionSchema = new Schema<ITransaction>({
   tags:          [{ type: String }],
   createdAt:     { type: Date, default: Date.now },
   paymentMethod: { type: String, enum: ['pix', 'credito', 'debito', 'alelo', ''], default: ''},
+  
+  // Novos campos opcionais no banco
+  installmentCount: { type: Number },
+  installmentTotal: { type: Number },
 });
 
 export default model<ITransaction>('Transaction', transactionSchema);
